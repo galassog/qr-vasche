@@ -948,22 +948,30 @@
 
     async function initDetailView(vascaId) {
         const detailViewContainer = document.getElementById('detail-view-container');
-        detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
-        
-        try {
-            // Se non c'è un utente autenticato, esegui l'accesso anonimo.
-            // Questo è fondamentale per ottenere i permessi di lettura.
-            if (!auth.currentUser) {
-                console.log("Nessun utente, tento l'accesso anonimo...");
-                await signInAnonymously(auth);
-                console.log("Accesso anonimo riuscito.");
-            }
+        detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Autenticazione in corso...</p>';
 
-            // Definisco i percorsi ai dati nel database
+        try {
+            // Passo 1: Attendere che l'autenticazione sia pronta.
+            // Questo è il modo più robusto per garantire i permessi di lettura.
+            const user = await new Promise((resolve, reject) => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    unsubscribe(); // Ci serve solo il primo stato.
+                    if (user) {
+                        resolve(user); // L'utente è già autenticato.
+                    } else {
+                        // Nessun utente, quindi eseguiamo l'accesso anonimo.
+                        signInAnonymously(auth).then(userCredential => resolve(userCredential.user)).catch(reject);
+                    }
+                }, reject); // Respingi la promessa in caso di errore di autenticazione.
+            });
+
+            console.log("Autenticazione completata. Utente:", user.uid);
+            detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
+            
+            // Passo 2: Recuperare i dati, ora che l'autenticazione è garantita.
             const vascaRef = doc(db, "vasche", vascaId);
             const analisiQuery = query(collection(db, "analisi"), where("vascaId", "==", vascaId));
-
-            // Eseguo le letture dei dati in parallelo per massima efficienza
+            
             console.log(`Recupero dati per vasca ID: ${vascaId}`);
             const [vascaDoc, analisiSnapshot] = await Promise.all([
                 getDoc(vascaRef),
@@ -971,31 +979,25 @@
             ]);
             console.log("Lettura dati dal database completata.");
 
-            // Controllo se la vasca richiesta esiste effettivamente
             if (!vascaDoc.exists()) {
                  detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg">Errore: Vasca con ID ${vascaId} non trovata.</p>`;
-                 console.error(`Vasca con ID ${vascaId} non trovata.`);
                  return;
             }
 
-            // Estraggo e preparo i dati della vasca e delle analisi
             const vascaData = { id: vascaDoc.id, ...vascaDoc.data() };
             const analisiData = [];
             analisiSnapshot.forEach((doc) => {
                 analisiData.push({ id: doc.id, ...doc.data() });
             });
             analisiData.sort((a, b) => new Date(b.data) - new Date(a.data));
-            console.log("Dati processati, pronto per la visualizzazione.");
 
-            // Una volta che tutti i dati sono pronti, creo la pagina di dettaglio
             renderDetailView(vascaData, analisiData);
 
         } catch (error) {
-            // In caso di errore, fornisco un messaggio specifico
             console.error("ERRORE DETTAGLIATO in initDetailView:", error);
             let userMessage = "Impossibile caricare i dettagli. Riprova più tardi.";
             if (error.code === 'permission-denied') {
-                userMessage = "Impossibile caricare i dettagli: problema di autorizzazione.\n\nLe regole di sicurezza di Firebase potrebbero non consentire l'accesso pubblico ai dati. Controlla la configurazione del tuo database.";
+                userMessage = "Impossibile caricare i dettagli: problema di autorizzazione.\n\nControlla le regole di sicurezza del tuo database Firebase.";
             }
             detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg whitespace-pre-wrap">${userMessage}</p>`;
         }
@@ -3308,6 +3310,7 @@
 
 </script>
 </html>
+
 
 
 
