@@ -2213,7 +2213,7 @@
         const qrInfoPara = document.getElementById('qr-info');
         let url;
 
-        if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
+        if (publicBaseUrl === 'https://galassog.github.io/qr-vasche/index.htlm' || !publicBaseUrl) {
             // Se l'URL non è stato configurato, mostra un messaggio di aiuto e un testo nel QR.
             const vasca = vascheData.find(v => v.id === vascaId);
             url = `Vasca: ${vasca.numero}\nContenuto: ${vasca.contenuto}\nVolume: ${vasca.volumeCorrente} L`;
