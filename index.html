@@ -949,10 +949,12 @@
     async function initDetailView(vascaId) {
         const detailViewContainer = document.getElementById('detail-view-container');
         detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
+        
         try {
-            // app, db, and auth are now global and initialized
+            // Autenticazione anonima per permettere la lettura dei dati
             await new Promise((resolve, reject) => {
-                onAuthStateChanged(auth, user => {
+                const unsubscribe = onAuthStateChanged(auth, user => {
+                    unsubscribe(); 
                     if (user) {
                         resolve(user);
                     } else {
@@ -961,44 +963,37 @@
                 });
             });
 
-            let vascaData = null;
-            let analisiData = [];
-            let allVasche = [];
-            let dataReady = { vasca: false, analisi: false };
+            // Utilizziamo getDoc e getDocs per un caricamento dati più diretto e robusto
+            const vascaRef = doc(db, "vasche", vascaId);
+            const analisiQuery = query(collection(db, "analisi"), where("vascaId", "==", vascaId));
 
-            const checkAndRender = () => {
-                if (dataReady.vasca && dataReady.analisi) {
-                    if (vascaData) {
-                        renderDetailView(vascaData, analisiData);
-                    } else {
-                        detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg">Errore: Vasca con ID ${vascaId} non trovata.</p>`;
-                    }
-                }
-            };
+            // Eseguiamo entrambe le letture in parallelo
+            const [vascaDoc, analisiSnapshot] = await Promise.all([
+                getDoc(vascaRef),
+                getDocs(analisiQuery)
+            ]);
 
-            onSnapshot(collection(db, "vasche"), (snapshot) => {
-                snapshot.forEach((doc) => {
-                    if(doc.id === vascaId){
-                       vascaData = { id: doc.id, ...doc.data() };
-                    }
-                });
-                dataReady.vasca = true;
-                checkAndRender();
+            // Controlliamo se la vasca esiste
+            if (!vascaDoc.exists()) {
+                 detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg">Errore: Vasca con ID ${vascaId} non trovata.</p>`;
+                 return; // Interrompiamo l'esecuzione
+            }
+
+            // Estraiamo i dati della vasca
+            const vascaData = { id: vascaDoc.id, ...vascaDoc.data() };
+
+            // Estraiamo e ordiniamo i dati delle analisi
+            const analisiData = [];
+            analisiSnapshot.forEach((doc) => {
+                analisiData.push({ id: doc.id, ...doc.data() });
             });
+            analisiData.sort((a, b) => new Date(b.data) - new Date(a.data));
 
-            onSnapshot(collection(db, "analisi"), (snapshot) => {
-                const allAnalisi = [];
-                snapshot.forEach((doc) => {
-                     allAnalisi.push({ id: doc.id, ...doc.data() });
-                });
-                analisiData = allAnalisi.filter(a => a.vascaId === vascaId)
-                                         .sort((a, b) => new Date(b.data) - new Date(a.data));
-                dataReady.analisi = true;
-                checkAndRender();
-            });
+            // Una volta che tutti i dati sono pronti, renderizziamo la vista
+            renderDetailView(vascaData, analisiData);
 
         } catch (error) {
-            console.error("Error in detail view:", error);
+            console.error("Errore di inizializzazione o autenticazione:", error);
             detailViewContainer.innerHTML = '<p class="text-center text-red-500 text-lg">Impossibile caricare i dettagli. Riprova più tardi.</p>';
         }
     }
@@ -1098,7 +1093,7 @@
     // !! IMPORTANTE !!
     // Per far funzionare i QR Code, carica questo file su un servizio di hosting 
     // (es. GitHub Pages, Netlify, Vercel) e sostituisci il placeholder qui sotto con il tuo URL pubblico.
-    const publicBaseUrl = 'REPLACE_WITH_YOUR_PUBLIC_URL'; // Es: https://tuo-utente.github.io/cantina/index.html
+    const publicBaseUrl = 'https://galassog.github.io/qr-vasche/index.html'; // Es: https://tuo-utente.github.io/cantina/index.html
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -2213,7 +2208,7 @@
         const qrInfoPara = document.getElementById('qr-info');
         let url;
 
-        if (publicBaseUrl === 'https://galassog.github.io/qr-vasche/index.htlm' || !publicBaseUrl) {
+        if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
             // Se l'URL non è stato configurato, mostra un messaggio di aiuto e un testo nel QR.
             const vasca = vascheData.find(v => v.id === vascaId);
             url = `Vasca: ${vasca.numero}\nContenuto: ${vasca.contenuto}\nVolume: ${vasca.volumeCorrente} L`;
@@ -3310,4 +3305,6 @@
 
 </script>
 </html>
+
+
 
