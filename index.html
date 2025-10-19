@@ -996,7 +996,9 @@
         } catch (error) {
             console.error("ERRORE DETTAGLIATO in initDetailView:", error);
             let userMessage = "Impossibile caricare i dettagli. Riprova più tardi.";
-            if (error.code === 'permission-denied') {
+            if (error.code === 'auth/unauthorized-domain') {
+                userMessage = "Errore Dominio Non Autorizzato:\nIl dominio da cui stai accedendo non è autorizzato. Aggiungi '" + window.location.hostname + "' alla lista dei domini autorizzati nelle impostazioni di Autenticazione del tuo progetto Firebase.";
+            } else if (error.code === 'permission-denied') {
                 userMessage = "Impossibile caricare i dettagli: problema di autorizzazione.\n\nControlla le regole di sicurezza del tuo database Firebase.";
             }
             detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg whitespace-pre-wrap">${userMessage}</p>`;
@@ -3310,9 +3312,4 @@
 
 </script>
 </html>
-
-
-
-
-
 
