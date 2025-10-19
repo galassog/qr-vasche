@@ -933,6 +933,7 @@
     }
     db = getFirestore(app);
     auth = getAuth(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestione-vasche'; // Use your project ID as fallback
 
     function showError(message, title = "Errore") {
         console.log("Function 'showError' called.");
@@ -952,27 +953,28 @@
 
         try {
             // Passo 1: Attendere che l'autenticazione sia pronta.
-            // Questo è il modo più robusto per garantire i permessi di lettura.
             const user = await new Promise((resolve, reject) => {
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    unsubscribe(); // Ci serve solo il primo stato.
+                    unsubscribe();
                     if (user) {
-                        resolve(user); // L'utente è già autenticato.
+                        resolve(user);
                     } else {
-                        // Nessun utente, quindi eseguiamo l'accesso anonimo.
                         signInAnonymously(auth).then(userCredential => resolve(userCredential.user)).catch(reject);
                     }
-                }, reject); // Respingi la promessa in caso di errore di autenticazione.
+                }, reject);
             });
 
             console.log("Autenticazione completata. Utente:", user.uid);
             detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
             
-            // Passo 2: Recuperare i dati, ora che l'autenticazione è garantita.
-            const vascaRef = doc(db, "vasche", vascaId);
-            const analisiQuery = query(collection(db, "analisi"), where("vascaId", "==", vascaId));
+            // Passo 2: Recuperare i dati usando il percorso pubblico corretto
+            const vascaPath = `artifacts/${appId}/public/data/vasche/${vascaId}`;
+            const analisiPath = `artifacts/${appId}/public/data/analisi`;
+
+            const vascaRef = doc(db, vascaPath);
+            const analisiQuery = query(collection(db, analisiPath), where("vascaId", "==", vascaId));
             
-            console.log(`Recupero dati per vasca ID: ${vascaId}`);
+            console.log(`Recupero dati per vasca da: ${vascaPath}`);
             const [vascaDoc, analisiSnapshot] = await Promise.all([
                 getDoc(vascaRef),
                 getDocs(analisiQuery)
@@ -996,10 +998,15 @@
         } catch (error) {
             console.error("ERRORE DETTAGLIATO in initDetailView:", error);
             let userMessage = "Impossibile caricare i dettagli. Riprova più tardi.";
+            
+            if (error.code) {
+                 userMessage += `\n\n(Codice Errore: ${error.code})`;
+            }
+
             if (error.code === 'auth/unauthorized-domain') {
                 userMessage = "Errore Dominio Non Autorizzato:\nIl dominio da cui stai accedendo non è autorizzato. Aggiungi '" + window.location.hostname + "' alla lista dei domini autorizzati nelle impostazioni di Autenticazione del tuo progetto Firebase.";
             } else if (error.code === 'permission-denied') {
-                userMessage = "Impossibile caricare i dettagli: problema di autorizzazione.\n\nControlla le regole di sicurezza del tuo database Firebase.";
+                userMessage = "Impossibile caricare i dettagli: Permesso Negato (permission-denied).\n\nQuesto errore conferma che le Regole di Sicurezza del database Firestore stanno bloccando l'accesso. Per favore, controlla e aggiorna le regole come indicato.";
             }
             detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg whitespace-pre-wrap">${userMessage}</p>`;
         }
@@ -1101,8 +1108,6 @@
     // Per far funzionare i QR Code, carica questo file su un servizio di hosting 
     // (es. GitHub Pages, Netlify, Vercel) e sostituisci il placeholder qui sotto con il tuo URL pubblico.
     const publicBaseUrl = 'https://galassog.github.io/qr-vasche/index.html'; // Es: https://tuo-utente.github.io/cantina/index.html
-
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
     const authModal = document.getElementById('auth-modal');
     const appContainer = document.getElementById('app-container');
@@ -1306,8 +1311,16 @@
         }
     });
 
+    function getCollectionRef(collectionName) {
+        return collection(db, `artifacts/${appId}/public/data/${collectionName}`);
+    }
+
+    function getDocRef(collectionName, docId) {
+        return doc(db, `artifacts/${appId}/public/data/${collectionName}/${docId}`);
+    }
+
     function setupRealtimeListeners() {
-        const vascheRef = collection(db, "vasche");
+        const vascheRef = getCollectionRef("vasche");
         onSnapshot(vascheRef, (snapshot) => {
             vascheData = [];
             snapshot.forEach((doc) => {
@@ -1327,7 +1340,7 @@
             showError("Errore nel recupero delle vasche. Riprova più tardi.");
         });
 
-        const operazioniRef = collection(db, "operazioni");
+        const operazioniRef = getCollectionRef("operazioni");
         onSnapshot(operazioniRef, (snapshot) => {
             operazioniData = [];
             snapshot.forEach((doc) => {
@@ -1351,7 +1364,7 @@
             showError("Errore nel recupero delle operazioni. Riprova più tardi.");
         });
 
-        const analisiRef = collection(db, "analisi");
+        const analisiRef = getCollectionRef("analisi");
         onSnapshot(analisiRef, (snapshot) => {
             analisiData = [];
             snapshot.forEach((doc) => {
@@ -1369,7 +1382,7 @@
             showError("Errore nel recupero delle analisi. Riprova più tardi.");
         });
 
-        const ordiniRef = collection(db, "ordini_lavoro");
+        const ordiniRef = getCollectionRef("ordini_lavoro");
         onSnapshot(ordiniRef, (snapshot) => {
             ordiniLavoroData = [];
             snapshot.forEach((doc) => {
@@ -1582,7 +1595,7 @@
                         finalState.contenuto = 'Vuota';
                         finalState.denominazione = '';
                     }
-                    batch.update(doc(db, "vasche", tankId), finalState);
+                    batch.update(getDocRef("vasche", tankId), finalState);
                 }
                 
                 const opData = { 
@@ -1592,9 +1605,9 @@
                 };
 
                 if (editingOperazioneId) {
-                    batch.update(doc(db, "operazioni", editingOperazioneId), opData);
+                    batch.update(getDocRef("operazioni", editingOperazioneId), opData);
                 } else {
-                    batch.set(doc(collection(db, "operazioni")), opData);
+                    batch.set(doc(getCollectionRef("operazioni")), opData);
                 }
 
                 await batch.commit();
@@ -1704,7 +1717,7 @@
                         finalState.contenuto = 'Vuota';
                         finalState.denominazione = '';
                     }
-                    batch.update(doc(db, "vasche", id), finalState);
+                    batch.update(getDocRef("vasche", id), finalState);
                 }
                 
                 const opData = {
@@ -1714,9 +1727,9 @@
                 };
 
                 if (editingOperazioneId) {
-                    batch.update(doc(db, "operazioni", editingOperazioneId), opData);
+                    batch.update(getDocRef("operazioni", editingOperazioneId), opData);
                 } else {
-                    batch.set(doc(collection(db, "operazioni")), opData);
+                    batch.set(doc(getCollectionRef("operazioni")), opData);
                 }
                 
                 await batch.commit();
@@ -1784,7 +1797,7 @@
                 }
                 
                 try {
-                    const vascaRef = doc(db, "vasche", vascaId);
+                    const vascaRef = getDocRef("vasche", vascaId);
                     await updateDoc(vascaRef, { volumeCorrente: nuovoVolume, contenuto: contenutoLavorazioneAttuale, colore: coloreLavorazioneAttuale });
                     console.log("Volume e contenuto della vasca aggiornati con successo!");
                 } catch (error) {
@@ -1794,7 +1807,7 @@
                 }
             } else {
                 try {
-                    const vascaRef = doc(db, "vasche", vascaId);
+                    const vascaRef = getDocRef("vasche", vascaId);
                     await updateDoc(vascaRef, { contenuto: contenutoLavorazioneAttuale, colore: coloreLavorazioneAttuale });
                 } catch (error) {
                     console.error("Errore nell'aggiornamento del contenuto:", error);
@@ -1992,7 +2005,7 @@
                     const mappedHeaders = headers.map(h => headerMap[h] || null); // Ignora le colonne non mappate
 
                     const batch = writeBatch(db);
-                    const analisiRef = collection(db, "analisi");
+                    const analisiRef = getCollectionRef("analisi");
                     let importedCount = 0;
     
                     validDataRows.forEach(row => {
@@ -2191,7 +2204,7 @@
                 const idToDelete = e.target.dataset.id;
                 showConfirmModal("Sei sicuro di voler eliminare questa vasca? Non potrai recuperare i dati.", async () => {
                     try {
-                        await deleteDoc(doc(db, "vasche", idToDelete));
+                        await deleteDoc(getDocRef("vasche", idToDelete));
                         console.log("Vasca eliminata con successo!");
                         resetForm();
                     } catch (error) {
@@ -2795,11 +2808,11 @@
             for(const tankId of involvedIds){
                 const finalState = virtualVasche.get(tankId);
                 if (vascheData.find(v => v.id === tankId).volumeCorrente !== finalState.volumeCorrente || vascheData.find(v => v.id === tankId).contenuto !== finalState.contenuto) {
-                     batch.update(doc(db, "vasche", tankId), finalState);
+                     batch.update(getDocRef("vasche", tankId), finalState);
                 }
             }
             
-            batch.delete(doc(db, "operazioni", op.id));
+            batch.delete(getDocRef("operazioni", op.id));
             await batch.commit();
             console.log("Operazione eliminata e volumi ripristinati!");
             resetOperazioneForms();
@@ -2845,7 +2858,7 @@
                 const idToDelete = e.target.dataset.id;
                 showConfirmModal("Sei sicuro di voler eliminare questa analisi?", async () => {
                     try {
-                        await deleteDoc(doc(db, "analisi", idToDelete));
+                        await deleteDoc(getDocRef("analisi", idToDelete));
                         console.log("Analisi eliminata con successo!");
                     } catch (error) {
                         console.error("Errore nell'eliminazione dell'analisi:", error);
@@ -2975,7 +2988,7 @@
     async function addVasca(data) {
         console.log("Function 'addVasca' called.");
         try {
-            await addDoc(collection(db, "vasche"), data);
+            await addDoc(getCollectionRef("vasche"), data);
             console.log("Vasca aggiunta con successo!");
         } catch (error) {
             console.error("Errore nell'aggiunta della vasca:", error);
@@ -2986,8 +2999,7 @@
     async function updateVasca(id, data) {
         console.log("Function 'updateVasca' called.");
         try {
-            const vascaRef = doc(db, "vasche", id);
-            await updateDoc(vascaRef, data);
+            await updateDoc(getDocRef("vasche", id), data);
             console.log("Vasca aggiornata con successo!");
         } catch (error) {
             console.error("Errore nell'aggiornamento della vasca:", error);
@@ -2998,7 +3010,7 @@
     async function addOperazione(data) {
         console.log("Function 'addOperazione' called.");
         try {
-            await addDoc(collection(db, "operazioni"), data);
+            await addDoc(getCollectionRef("operazioni"), data);
             console.log("Operazione aggiunta con successo!");
         } catch (error) {
             console.error("Errore nell'aggiunta dell'operazione:", error);
@@ -3009,8 +3021,7 @@
     async function updateOperazione(id, data) {
         console.log("Function 'updateOperazione' called.");
         try {
-            const opRef = doc(db, "operazioni", id);
-            await updateDoc(opRef, data);
+            await updateDoc(getDocRef("operazioni", id), data);
             console.log("Operazione aggiornata con successo!");
         } catch (error) {
             console.error("Errore nell'aggiornamento dell'operazione:", error);
@@ -3021,7 +3032,7 @@
     async function addAnalisi(data) {
         console.log("Function 'addAnalisi' called.");
         try {
-            await addDoc(collection(db, "analisi"), data);
+            await addDoc(getCollectionRef("analisi"), data);
             console.log("Analisi aggiunta con successo!");
         } catch (error) {
             console.error("Errore nell'aggiunta dell'analisi:", error);
@@ -3032,8 +3043,7 @@
     async function updateAnalisi(id, data) {
         console.log("Function 'updateAnalisi' called.");
         try {
-            const analisiRef = doc(db, "analisi", id);
-            await updateDoc(analisiRef, data);
+            await updateDoc(getDocRef("analisi", id), data);
             console.log("Analisi aggiornata con successo!");
         } catch (error) {
             console.error("Errore nell'aggiornamento dell'analisi:", error);
@@ -3043,7 +3053,7 @@
 
     async function addOrdineLavoro(data) {
         try {
-            await addDoc(collection(db, "ordini_lavoro"), data);
+            await addDoc(getCollectionRef("ordini_lavoro"), data);
         } catch (error) {
             console.error("Errore nell'aggiunta dell'ordine di lavoro:", error);
             showError("Errore nell'aggiunta dell'ordine di lavoro.");
@@ -3052,7 +3062,7 @@
 
     async function updateOrdineLavoro(id, data) {
         try {
-            await updateDoc(doc(db, "ordini_lavoro", id), data);
+            await updateDoc(getDocRef("ordini_lavoro", id), data);
         } catch (error) {
             console.error("Errore nell'aggiornamento dell'ordine di lavoro:", error);
             showError("Errore nell'aggiornamento dell'ordine di lavoro.");
@@ -3061,7 +3071,7 @@
 
     async function deleteOrdineLavoro(id) {
         try {
-            await deleteDoc(doc(db, "ordini_lavoro", id));
+            await deleteDoc(getDocRef("ordini_lavoro", id));
         } catch (error) {
             console.error("Errore nell'eliminazione dell'ordine di lavoro:", error);
             showError("Errore nell'eliminazione dell'ordine di lavoro.");
@@ -3208,7 +3218,7 @@
     async function resetOperazioni() {
         console.log("Function 'resetOperazioni' called.");
         try {
-            const q = query(collection(db, "operazioni"));
+            const q = query(getCollectionRef("operazioni"));
             const querySnapshot = await getDocs(q);
             const batch = writeBatch(db);
             querySnapshot.forEach((doc) => {
@@ -3285,7 +3295,7 @@
         } catch (error) {
             console.error("Errore chiamata Gemini:", error);
             const errorMessageText = "Spiacente, non sono riuscito a elaborare la richiesta. Riprova più tardi.";
-            if (!showInModal) {
+            if (!showInmodal) {
                 appendMessage(errorMessageText, 'ai');
             } else {
                 showError(errorMessageText, "Errore AI");
