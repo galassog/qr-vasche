@@ -1,0 +1,3313 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>San Lorenzo - Cantina on Line</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafaf8; /* stone-50 */
+            color: #374151; /* gray-700 */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            margin-top: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #f59e0b; /* amber-500 */
+            box-shadow: 0 0 0 2px #fef3c7; /* amber-100 */
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-primary {
+            background-color: #991b1b; /* red-800 */
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #7f1d1d; /* red-900 */
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+            transform: translateY(-2px);
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            font-weight: 600;
+            background-color: transparent;
+            color: #4b5563;
+            border: 1px solid transparent;
+            border-bottom: none;
+        }
+        .tab-btn.active {
+            background-color: #ffffff;
+            color: #991b1b; /* red-800 */
+            border-color: #d1d5db;
+        }
+        .error-message {
+            color: #ef4444;
+            margin-top: 0.5rem;
+        }
+        .vasca-icon-container {
+            width: 80px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+        }
+        .vasca-liquid {
+            width: 60px;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            transition: height 0.5s ease-in-out;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .vasca-body {
+            width: 65px;
+            height: 85px;
+            border: 2px solid #a0a0a0;
+            border-top: none;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            background-color: #f0f0f0;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .vasca-top {
+            width: 70px;
+            height: 15px;
+            border: 2px solid #a0a0a0;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f0f0f0;
+        }
+        .cantina-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 2rem;
+            justify-items: center;
+        }
+        .cantina-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .cantina-item:hover {
+            transform: translateY(-5px);
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        /* Stili per la chat AI */
+        #chat-window {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f9fafb;
+        }
+        .chat-message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+        .user-message {
+            background-color: #fef3c7; /* amber-100 */
+            color: #78350f; /* amber-900 */
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .ai-message {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1f2937; /* gray-800 */
+            align-self: flex-start;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #991b1b;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-stone-50">
+
+<!-- Autenticazione Modal -->
+<div id="auth-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full">
+        <h2 id="auth-title" class="text-2xl font-bold mb-4 text-center">Accedi</h2>
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label for="auth-email" class="block text-gray-700">Email</label>
+                <input type="email" id="auth-email" class="form-input" placeholder="Tua email">
+            </div>
+            <div>
+                <label for="auth-password" class="block text-gray-700">Password</label>
+                <input type="password" id="auth-password" class="form-input" placeholder="Tua password">
+            </div>
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="remember-me" class="rounded text-red-800">
+                <label for="remember-me" class="text-gray-700">Ricorda la mia email</label>
+            </div>
+            <p id="auth-error-message" class="text-sm text-red-500 hidden"></p>
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="btn-login" class="btn btn-primary w-full">Accedi</button>
+                <button type="button" id="btn-register" class="btn btn-secondary w-full">Registrati</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="app-container" class="container hidden">
+    <div class="flex justify-between items-center mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-100 to-amber-200 shadow-md">
+        <div class="flex items-center space-x-4">
+             <!-- Logo SVG Inserito Direttamente -->
+            <div class="p-1 bg-white rounded-full shadow-md flex items-center justify-center">
+                <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <path id="textPath" d="M 10,50 A 40,40 0 1 1 90,50 A 40,40 0 1 1 10,50" fill="none" />
+                    </defs>
+                    <circle cx="50" cy="50" r="48" fill="#002080" stroke="#bca34d" stroke-width="1"/>
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="2" stroke-dasharray="2 2"/>
+                    
+                    <path d="M50 25 L55 45 L75 50 L55 55 L50 75 L45 55 L25 50 L45 45 Z" fill="#bca34d" />
+                    <path d="M28 30 L31 38 L39 41 L31 44 L28 52 L25 44 L17 41 L25 38 Z" fill="#bca34d" />
+                    <path d="M72 18 L75 26 L83 29 L75 32 L72 40 L69 32 L61 29 L69 26 Z" fill="#bca34d" />
+                    <line x1="60" y1="20" x2="40" y2="40" stroke="#bca34d" stroke-width="2" />
+
+                    <text font-family="Inter, sans-serif" font-size="12" fill="white" font-weight="bold">
+                        <textPath href="#textPath" startOffset="0%">SAN</textPath>
+                        <textPath href="#textPath" startOffset="50%">LORENZO</textPath>
+                    </text>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-red-900">Cantina on Line</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <p class="text-sm text-gray-600">ID Utente: <span id="user-id-display" class="font-mono bg-amber-50 px-2 py-1 rounded-md text-gray-800"></span></p>
+            <button id="btn-logout" class="btn btn-secondary">Esci</button>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="flex mb-4 border-b border-gray-200 overflow-x-auto">
+            <button id="tab-vasi" class="tab-btn active -mb-px flex-shrink-0">Vasche</button>
+            <button id="tab-travasi" class="tab-btn -mb-px flex-shrink-0">Travasi</button>
+            <button id="tab-imbottigliamento" class="tab-btn -mb-px flex-shrink-0">Imbottigliamento</button>
+            <button id="tab-lavorazioni" class="tab-btn -mb-px flex-shrink-0">Lavorazioni</button>
+            <button id="tab-laboratorio" class="tab-btn -mb-px flex-shrink-0">Laboratorio</button>
+            <button id="tab-ordini" class="tab-btn -mb-px flex-shrink-0">Ordini di Lavoro</button>
+            <button id="tab-riepilogo" class="tab-btn -mb-px flex-shrink-0">Riepilogo</button>
+            <button id="tab-cantina" class="tab-btn -mb-px flex-shrink-0">Cantina</button>
+            <button id="tab-assistente" class="tab-btn -mb-px flex-shrink-0">Assistente AI</button>
+        </div>
+
+        <!-- Vasche Section -->
+        <div id="content-vasi" class="tab-content">
+            <h2 class="text-2xl font-semibold mb-4"><span id="form-title">Gestione Vasche</span></h2>
+            <form id="form-vasca" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="numero-vasca" class="block text-gray-700">Numero/Nome Vasca <span class="text-red-500">*</span></label>
+                    <input type="text" id="numero-vasca" class="form-input" placeholder="Es: Vasca 1, V101" required>
+                </div>
+                <div>
+                    <label for="capacita-vasca" class="block text-gray-700">Capacità totale <span class="text-red-500">*</span></label>
+                    <div class="flex items-center space-x-2">
+                         <input type="number" id="capacita-vasca" class="form-input" placeholder="Es: 50" required>
+                         <select id="unita-capacita-vasca" class="form-input w-24">
+                             <option value="L">L</option>
+                             <option value="hL" selected>hL</option>
+                         </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="tipo-vasca" class="block text-gray-700">Tipo <span class="text-red-500">*</span></label>
+                    <input type="text" id="tipo-vasca" class="form-input" placeholder="Es: Inox, Cemento, Rovere" required>
+                </div>
+                 <div>
+                    <label for="colore-vasca" class="block text-gray-700">Colore del Vino</label>
+                    <select id="colore-vasca" class="form-input">
+                        <option value="">Seleziona colore</option>
+                        <option value="Rosso">Rosso</option>
+                        <option value="Bianco">Bianco</option>
+                        <option value="Rosato">Rosato</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="volume-iniziale-vasca" class="block text-gray-700">Volume iniziale</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="volume-iniziale-vasca" class="form-input" placeholder="Es: 50">
+                        <select id="unita-volume-iniziale-vasca" class="form-input w-24">
+                            <option value="L">L</option>
+                            <option value="hL" selected>hL</option>
+                         </select>
+                    </div>
+                </div>
+                 <div>
+                    <label for="contenuto-vasca" class="block text-gray-700">Contenuto (Materia Prima)</label>
+                    <input type="text" id="contenuto-vasca" class="form-input" placeholder="Es: Sangiovese 2023, Mosto">
+                </div>
+                 <div>
+                    <label for="denominazione-vasca" class="block text-gray-700">Denominazione (Legale/Commerciale)</label>
+                    <input type="text" id="denominazione-vasca" class="form-input" placeholder="Es: Chianti Classico DOCG">
+                </div>
+                 <div>
+                    <label for="annata-vasca" class="block text-gray-700">Annata</label>
+                    <input type="number" id="annata-vasca" class="form-input" placeholder="Es: 2023">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="data-creazione-vasca" class="block text-gray-700">Data creazione</label>
+                    <input type="date" id="data-creazione-vasca" class="form-input">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="note-vasca" class="block text-gray-700">Note</label>
+                    <textarea id="note-vasca" class="form-input" rows="2" placeholder="Note aggiuntive..."></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end space-x-2">
+                    <button type="button" id="btn-cancel-edit" class="btn btn-secondary hidden">Annulla Modifica</button>
+                    <button type="submit" class="btn btn-primary"><span id="btn-submit-text">Salva Vasca</span></button>
+                </div>
+            </form>
+
+            <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Vasche</h3>
+            <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-vasche" class="text-sm font-medium text-gray-700">Filtra/Ordina:</label>
+                <select id="sort-vasche" class="form-input w-48">
+                    <option value="default">Predefinito</option>
+                    <option value="full">Piene</option>
+                    <option value="empty">Vuote</option>
+                    <option value="volume_asc">Volume (crescente)</option>
+                    <option value="volume_desc">Volume (decrescente)</option>
+                    <option value="numero_asc">Numero (crescente)</option>
+                    <option value="numero_desc">Numero (decrescente)</option>
+                </select>
+            </div>
+            <div id="lista-vasche" class="space-y-4">
+                <p class="text-center text-gray-500">Nessuna vasca trovata. Aggiungine una per iniziare!</p>
+            </div>
+        </div>
+
+        <!-- Travasi Section -->
+        <div id="content-travasi" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Gestione Travasi</h2>
+            <form id="form-travaso">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="tipo-travaso" class="block text-gray-700">Tipo di Operazione</label>
+                        <select id="tipo-travaso" class="form-input" required>
+                            <option value="vino">Travaso Vino</option>
+                            <option value="feccia">Travaso Feccia</option>
+                            <option value="vinaccia">Travaso Vinaccia</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="vasca-origine" class="block text-gray-700">Vasca di Origine</label>
+                        <select id="vasca-origine" class="form-input" required>
+                            <option value="">Seleziona una vasca</option>
+                        </select>
+                         <p id="volume-vasca-travasi-display" class="text-sm mt-1 text-gray-600 font-medium"></p>
+                    </div>
+                    <div>
+                        <label for="denominazione-travaso" class="block text-gray-700">Denominazione della Massa</label>
+                        <input type="text" id="denominazione-travaso" class="form-input" placeholder="Es: Chianti Classico Riserva">
+                    </div>
+                     <div>
+                        <label for="annata-travaso" class="block text-gray-700">Annata</label>
+                        <input type="number" id="annata-travaso" class="form-input" placeholder="Es: 2023">
+                    </div>
+                    <div>
+                        <label for="colore-travaso" class="block text-gray-700">Colore del Vino</label>
+                        <select id="colore-travaso" class="form-input">
+                            <option value="">Seleziona colore</option>
+                            <option value="Rosso">Rosso</option>
+                            <option value="Bianco">Bianco</option>
+                            <option value="Rosato">Rosato</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="travaso-vino-fields">
+                    <div class="mt-4">
+                        <label class="block text-gray-700">Vasca/e di Destinazione</label>
+                        <div class="grid grid-cols-2 gap-2 mt-2" id="destinazione-container">
+                            <input type="text" class="form-input destino-numero" placeholder="Numero vasca 1">
+                            <div class="flex items-center space-x-2">
+                                <input type="number" class="form-input destino-quantita" placeholder="Quantità" step="any">
+                                <span class="text-gray-500">hL</span>
+                            </div>
+                            <input type="text" class="form-input destino-numero" placeholder="Numero vasca 2">
+                            <div class="flex items-center space-x-2">
+                                <input type="number" class="form-input destino-quantita" placeholder="Quantità" step="any">
+                                <span class="text-gray-500">hL</span>
+                            </div>
+                            <input type="text" class="form-input destino-numero" placeholder="Numero vasca 3">
+                            <div class="flex items-center space-x-2">
+                                <input type="number" class="form-input destino-quantita" placeholder="Quantità" step="any">
+                                <span class="text-gray-500">hL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="travaso-feccia-vinaccia-fields" class="hidden">
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="vasca-destinazione-unica" class="block text-gray-700">Vasca di Destinazione</label>
+                            <input type="text" id="vasca-destinazione-unica" class="form-input" placeholder="Numero vasca">
+                        </div>
+                        <div>
+                            <label for="quantita-unica" class="block text-gray-700">Quantità</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" id="quantita-unica" class="form-input" placeholder="Quantità" step="any">
+                                <span class="text-gray-500">hL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="data-travaso" class="block text-gray-700">Data Operazione</label>
+                        <input type="date" id="data-travaso" class="form-input" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="note-travaso" class="block text-gray-700">Note</label>
+                        <textarea id="note-travaso" class="form-input" rows="2" placeholder="Note aggiuntive..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit" class="btn btn-primary">Registra Travaso</button>
+                </div>
+            </form>
+            <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Travasi Recenti</h3>
+            <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-travasi" class="text-sm font-medium text-gray-700">Ordina per:</label>
+                <select id="sort-travasi" class="form-input w-48">
+                    <option value="data_desc">Data (Più recenti)</option>
+                    <option value="data_asc">Data (Meno recenti)</option>
+                    <option value="quantita_desc">Quantità (Decrescente)</option>
+                    <option value="quantita_asc">Quantità (Crescente)</option>
+                </select>
+            </div>
+            <div id="lista-travasi" class="space-y-4">
+                <p class="text-center text-gray-500">Nessun travaso registrato.</p>
+            </div>
+        </div>
+
+        <!-- Imbottigliamento Section -->
+        <div id="content-imbottigliamento" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Gestione Imbottigliamento</h2>
+            <form id="form-imbottigliamento">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="vasca-imbottigliamento-origine" class="block text-gray-700">Vasca di Prelievo</label>
+                        <select id="vasca-imbottigliamento-origine" class="form-input" required>
+                            <option value="">Seleziona una vasca</option>
+                        </select>
+                        <p id="volume-vasca-imbottigliamento-display" class="text-sm mt-1 text-gray-600 font-medium"></p>
+                    </div>
+                     <div>
+                        <label for="denominazione-vino" class="block text-gray-700">Denominazione Vino (Legale/Commerciale)</label>
+                        <input type="text" id="denominazione-vino" class="form-input" placeholder="Es: Chianti Classico DOCG" required>
+                    </div>
+                    <div>
+                        <label for="lotto-produzione" class="block text-gray-700">Lotto di Produzione</label>
+                        <input type="text" id="lotto-produzione" class="form-input" placeholder="Es: L-01-2024">
+                    </div>
+                    <div>
+                        <label for="quantita-imbottigliamento" class="block text-gray-700">Quantità di vino</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="quantita-imbottigliamento" class="form-input" placeholder="Es: 100" required>
+                            <select id="unita-quantita-imbottigliamento" class="form-input w-24">
+                                <option value="L">L</option>
+                                <option value="hL" selected>hL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="volume-bottiglie" class="block text-gray-700">Volume bottiglia</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="volume-bottiglie" class="form-input" placeholder="Es: 0.75" required step="any">
+                            <select id="unita-volume-bottiglie" class="form-input w-24">
+                                <option value="L" selected>L</option>
+                                <option value="hL">hL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="numero-bottiglie" class="block text-gray-700">Numero di bottiglie/Bag-in-box</label>
+                        <input type="number" id="numero-bottiglie" class="form-input" readonly>
+                    </div>
+                    <div>
+                        <label for="data-imbottigliamento" class="block text-gray-700">Data Operazione</label>
+                        <input type="date" id="data-imbottigliamento" class="form-input" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="note-imbottigliamento" class="block text-gray-700">Note</label>
+                        <textarea id="note-imbottigliamento" class="form-input" rows="2" placeholder="Note aggiuntive..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit" class="btn btn-primary">Registra Imbottigliamento</button>
+                </div>
+            </form>
+            <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Imbottigliamenti Recenti</h3>
+             <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-imbottigliamenti" class="text-sm font-medium text-gray-700">Ordina per:</label>
+                <select id="sort-imbottigliamenti" class="form-input w-48">
+                    <option value="data_desc">Data (Più recenti)</option>
+                    <option value="data_asc">Data (Meno recenti)</option>
+                    <option value="denominazione">Denominazione (A-Z)</option>
+                    <option value="lotto">Lotto (A-Z)</option>
+                    <option value="quantita_desc">Quantità (Decrescente)</option>
+                    <option value="quantita_asc">Quantità (Crescente)</option>
+                </select>
+            </div>
+            <div id="lista-imbottigliamento" class="space-y-4">
+                <p class="text-center text-gray-500">Nessun imbottigliamento registrato.</p>
+            </div>
+        </div>
+
+        <!-- Lavorazioni Section -->
+        <div id="content-lavorazioni" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Gestione Lavorazioni</h2>
+            <form id="form-lavorazione">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="vasca-lavorazione" class="block text-gray-700">Vasca</label>
+                        <select id="vasca-lavorazione" class="form-input" required>
+                            <option value="">Seleziona una vasca</option>
+                        </select>
+                        <p id="volume-vasca-lavorazioni-display" class="text-sm mt-1 text-gray-600 font-medium"></p>
+                    </div>
+                    <div>
+                        <label for="tipo-lavorazione" class="block text-gray-700">Tipo Lavorazione</label>
+                        <select id="tipo-lavorazione" class="form-input" required>
+                            <option value="">Seleziona tipo di lavorazione</option>
+                            <option value="Aggiunta di liquido">Aggiunta di liquido</option>
+                            <option value="Filtraggio">Filtraggio</option>
+                            <option value="Chiarifica">Chiarifica</option>
+                            <option value="Fermentazione">Fermentazione</option>
+                            <option value="Altro">Altro</option>
+                        </select>
+                    </div>
+                    <div id="quantita-lavorazione-div" class="hidden">
+                        <label for="quantita-lavorazione" class="block text-gray-700">Quantità da aggiungere</label>
+                        <div class="flex items-center space-x-2">
+                             <input type="number" id="quantita-lavorazione" class="form-input" placeholder="Es: 100" required step="any">
+                             <select id="unita-quantita-lavorazione" class="form-input w-24">
+                                <option value="L">L</option>
+                                <option value="hL" selected>hL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="contenuto-lavorazione-attuale" class="block text-gray-700">Contenuto Attuale</label>
+                        <input type="text" id="contenuto-lavorazione-attuale" class="form-input">
+                    </div>
+                     <div>
+                        <label for="colore-lavorazione-attuale" class="block text-gray-700">Colore del Vino</label>
+                        <select id="colore-lavorazione-attuale" class="form-input">
+                            <option value="">Seleziona colore</option>
+                            <option value="Rosso">Rosso</option>
+                            <option value="Bianco">Bianco</option>
+                            <option value="Rosato">Rosato</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="contenuto-lavorazione" class="block text-gray-700">Aggiunte</label>
+                        <input type="text" id="contenuto-lavorazione" class="form-input" placeholder="Es: Lieviti, Acido citrico">
+                    </div>
+                    <div>
+                        <label for="data-lavorazione" class="block text-gray-700">Data Operazione</label>
+                        <input type="date" id="data-lavorazione" class="form-input" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="note-lavorazione" class="block text-gray-700">Note</label>
+                        <textarea id="note-lavorazione" class="form-input" rows="2" placeholder="Note aggiuntive..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit" class="btn btn-primary">Registra Lavorazione</button>
+                </div>
+            </form>
+            <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Lavorazioni Recenti</h3>
+            <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-lavorazioni" class="text-sm font-medium text-gray-700">Ordina per:</label>
+                <select id="sort-lavorazioni" class="form-input w-48">
+                    <option value="data_desc">Data (Più recenti)</option>
+                    <option value="data_asc">Data (Meno recenti)</option>
+                    <option value="tipo_lavorazione">Tipo Lavorazione (A-Z)</option>
+                </select>
+            </div>
+            <div id="lista-lavorazioni" class="space-y-4">
+                <p class="text-center text-gray-500">Nessuna lavorazione registrata.</p>
+            </div>
+        </div>
+        
+        <!-- Laboratorio Section -->
+        <div id="content-laboratorio" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Analisi di Laboratorio</h2>
+            <form id="form-analisi">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="vasca-analisi" class="block text-gray-700">Vasca</label>
+                        <select id="vasca-analisi" class="form-input" required>
+                            <option value="">Seleziona una vasca</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="data-analisi" class="block text-gray-700">Date</label>
+                        <input type="date" id="data-analisi" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="ethanol-analisi" class="block text-gray-700">Ethanol</label>
+                        <input type="number" id="ethanol-analisi" class="form-input" placeholder="Ethanol" step="any">
+                    </div>
+                    <div>
+                        <label for="glucfruc-analisi" class="block text-gray-700">GlucFruc</label>
+                        <input type="number" id="glucfruc-analisi" class="form-input" placeholder="GlucFruc" step="any">
+                    </div>
+                    <div>
+                        <label for="alctot-analisi" class="block text-gray-700">AlcTot</label>
+                        <input type="number" id="alctot-analisi" class="form-input" placeholder="AlcTot" step="any">
+                    </div>
+                    <div>
+                        <label for="at-analisi" class="block text-gray-700">At</label>
+                        <input type="number" id="at-analisi" class="form-input" placeholder="At" step="any">
+                    </div>
+                    <div>
+                        <label for="ph-analisi" class="block text-gray-700">pH</label>
+                        <input type="number" id="ph-analisi" class="form-input" placeholder="pH" step="any">
+                    </div>
+                    <div>
+                        <label for="av-analisi" class="block text-gray-700">Av</label>
+                        <input type="number" id="av-analisi" class="form-input" placeholder="Av" step="any">
+                    </div>
+                    <div>
+                        <label for="malic-analisi" class="block text-gray-700">Malic</label>
+                        <input type="number" id="malic-analisi" class="form-input" placeholder="Malic" step="any">
+                    </div>
+                    <div>
+                        <label for="lactic-analisi" class="block text-gray-700">Lactic</label>
+                        <input type="number" id="lactic-analisi" class="form-input" placeholder="Lactic" step="any">
+                    </div>
+                    <div>
+                        <label for="density-analisi" class="block text-gray-700">Density</label>
+                        <input type="number" id="density-analisi" class="form-input" placeholder="Density" step="any">
+                    </div>
+                    <div>
+                        <label for="fructose-analisi" class="block text-gray-700">Fructose</label>
+                        <input type="number" id="fructose-analisi" class="form-input" placeholder="Fructose" step="any">
+                    </div>
+                    <div>
+                        <label for="glucose-analisi" class="block text-gray-700">Glucose</label>
+                        <input type="number" id="glucose-analisi" class="form-input" placeholder="Glucose" step="any">
+                    </div>
+                    <div>
+                        <label for="solforosa-lib-analisi" class="block text-gray-700">Solforosa Lib</label>
+                        <input type="number" id="solforosa-lib-analisi" class="form-input" placeholder="Solforosa Lib" step="any">
+                    </div>
+                    <div>
+                        <label for="solforosa-tot-analisi" class="block text-gray-700">Solforosa Tot</label>
+                        <input type="number" id="solforosa-tot-analisi" class="form-input" placeholder="Solforosa Tot" step="any">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="note-analisi" class="block text-gray-700">Note</label>
+                        <textarea id="note-analisi" class="form-input" rows="2" placeholder="Note aggiuntive..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" id="btn-cancel-analisi" class="btn btn-secondary hidden">Annulla Modifica</button>
+                    <button type="submit" class="btn btn-primary">Salva Analisi</button>
+                </div>
+            </form>
+
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-4">Importa da Excel</h3>
+                <div class="flex items-center space-x-4">
+                    <input type="file" id="import-excel-file" class="form-input w-auto" accept=".xlsx, .xls">
+                    <button id="btn-import-excel" class="btn btn-primary whitespace-nowrap">Importa Analisi</button>
+                </div>
+                <p class="text-sm mt-2 text-gray-600">Il file Excel deve avere le colonne: "Vasca", "Data", "pH", "Acidità Totale", etc.</p>
+            </div>
+
+            <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Analisi Recenti</h3>
+            <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-analisi" class="text-sm font-medium text-gray-700">Ordina per:</label>
+                <select id="sort-analisi" class="form-input w-48">
+                    <option value="data_desc">Data (Più recenti)</option>
+                    <option value="data_asc">Data (Meno recenti)</option>
+                    <option value="vasca">Vasca (A-Z)</option>
+                </select>
+            </div>
+            <div id="lista-analisi" class="space-y-4">
+                <p class="text-center text-gray-500">Nessuna analisi registrata.</p>
+            </div>
+        </div>
+        
+        <!-- Ordini di Lavoro Section -->
+        <div id="content-ordini" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Gestione Ordini di Lavoro</h2>
+            <form id="form-ordine-lavoro">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="titolo-ordine" class="block text-gray-700">Titolo <span class="text-red-500">*</span></label>
+                        <input type="text" id="titolo-ordine" class="form-input" required placeholder="Es: Travaso per imbottigliamento">
+                    </div>
+                    <div>
+                        <label for="tipologia-ordine" class="block text-gray-700">Tipologia di Lavoro</label>
+                        <select id="tipologia-ordine" class="form-input">
+                            <option value="">Seleziona tipologia</option>
+                            <option value="Travaso">Travaso</option>
+                            <option value="Imbottigliamento">Imbottigliamento</option>
+                            <option value="Lavorazioni">Lavorazioni</option>
+                            <option value="Altro">Altro</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="vasca-ordine" class="block text-gray-700">Vasca Associata</label>
+                        <select id="vasca-ordine" class="form-input">
+                            <option value="">Nessuna vasca associata</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="descrizione-ordine" class="block text-gray-700">Descrizione</label>
+                        <textarea id="descrizione-ordine" class="form-input" rows="3" placeholder="Descrivi il lavoro da fare..."></textarea>
+                    </div>
+                    <div>
+                        <label for="data-scadenza-ordine" class="block text-gray-700">Data Scadenza</label>
+                        <input type="date" id="data-scadenza-ordine" class="form-input">
+                    </div>
+                    <div>
+                        <label for="priorita-ordine" class="block text-gray-700">Priorità</label>
+                        <select id="priorita-ordine" class="form-input">
+                            <option value="Bassa">Bassa</option>
+                            <option value="Media" selected>Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="stato-ordine" class="block text-gray-700">Stato</label>
+                        <select id="stato-ordine" class="form-input">
+                            <option value="Da Fare">Da Fare</option>
+                            <option value="In Corso">In Corso</option>
+                            <option value="Completato">Completato</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" id="btn-cancel-ordine" class="btn btn-secondary hidden">Annulla</button>
+                    <button type="submit" class="btn btn-primary">Salva Ordine</button>
+                </div>
+            </form>
+
+            <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Ordini di Lavoro</h3>
+            <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-ordini" class="text-sm font-medium text-gray-700">Ordina per:</label>
+                <select id="sort-ordini" class="form-input w-48">
+                    <option value="data_scadenza_asc">Data Scadenza (imminente)</option>
+                    <option value="priorita_desc">Priorità (Alta -> Bassa)</option>
+                    <option value="stato_asc">Stato (A-Z)</option>
+                </select>
+            </div>
+            <div id="lista-ordini" class="space-y-4">
+                <p class="text-center text-gray-500">Nessun ordine di lavoro trovato.</p>
+            </div>
+        </div>
+
+        <!-- Riepilogo Section -->
+        <div id="content-riepilogo" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Riepilogo Vasche</h2>
+            <label for="select-riepilogo-vasca" class="block text-gray-700">Seleziona una Vasca</label>
+            <select id="select-riepilogo-vasca" class="form-input mb-4">
+                <option value="">Seleziona una vasca per visualizzare il riepilogo</option>
+            </select>
+            <div id="riepilogo-dettagli" class="space-y-4">
+                <p class="text-center text-gray-500">Seleziona una vasca per visualizzare le operazioni.</p>
+            </div>
+            
+            <hr class="my-6 border-gray-300">
+            
+            <h2 class="text-2xl font-semibold mb-4">Ricerca Operazioni per Contenuto o Denominazione</h2>
+            <div class="flex items-center space-x-2 mt-4">
+                <input type="text" id="search-massa" class="form-input" placeholder="Cerca per contenuto o denominazione...">
+                <button id="btn-search-massa" class="btn btn-primary whitespace-nowrap">Cerca</button>
+                <button id="btn-reset-search" class="btn btn-secondary whitespace-nowrap">Resetta</button>
+            </div>
+            <div id="riepilogo-massa-dettagli" class="space-y-4 mt-6">
+                <p class="text-center text-gray-500">Cerca per visualizzare i movimenti.</p>
+            </div>
+             <div class="flex justify-end space-x-2 mt-4">
+                <button id="btn-export-excel" class="btn btn-secondary">Esporta in Excel</button>
+                <button id="btn-reset" class="btn btn-primary">Resetta Dati</button>
+             </div>
+        </div>
+        
+        <!-- Cantina Section -->
+        <div id="content-cantina" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Cantina</h2>
+            <div class="flex space-x-2 items-center mb-4">
+                <label for="sort-cantina" class="text-sm font-medium text-gray-700">Ordina per:</label>
+                <select id="sort-cantina" class="form-input w-48">
+                    <option value="numero_asc" selected>Numero (crescente)</option>
+                    <option value="numero_desc">Numero (decrescente)</option>
+                    <option value="volume_asc">Volume (crescente)</option>
+                    <option value="volume_desc">Volume (decrescente)</option>
+                    <option value="default">Predefinito</option>
+                </select>
+            </div>
+            <div id="cantina-layout" class="cantina-grid">
+                <p class="text-center text-gray-500">Caricamento vasche...</p>
+            </div>
+        </div>
+
+        <!-- Assistente AI Section -->
+        <div id="content-assistente" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Assistente AI Conversazionale</h2>
+            <div id="chat-window" class="flex flex-col">
+                <div class="chat-message ai-message">
+                    <p>Ciao! Sono il tuo assistente enologo. Chiedimi qualsiasi cosa sulla tua cantina, come "Qual è il volume totale del Sangiovese?" o "Genera un report delle operazioni dell'ultima settimana".</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="chat-input" class="form-input" placeholder="Scrivi il tuo messaggio...">
+                <button id="chat-send-btn" class="btn btn-primary whitespace-nowrap">Chiedi a Gemini</button>
+            </div>
+            <div id="ai-loading" class="flex items-center space-x-2 mt-2 hidden">
+                <div class="loading-spinner"></div>
+                <p class="text-gray-500">L'assistente sta pensando...</p>
+            </div>
+
+            <hr class="my-8 border-gray-300">
+
+            <h2 class="text-2xl font-semibold mb-4">Reportistica Avanzata</h2>
+            <div class="flex space-x-2">
+                <button id="btn-report-settimanale" class="btn btn-secondary">Genera Report Settimanale</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="detail-view-container" class="container hidden">
+    <!-- Content will be injected by JS -->
+</div>
+
+<!-- Custom Error Modal -->
+<div id="error-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+        <h3 id="error-title" class="text-xl font-bold mb-2 text-red-600">Errore</h3>
+        <p id="error-message" class="text-gray-700 mb-4 whitespace-pre-wrap"></p>
+        <div class="flex justify-end space-x-2">
+            <button id="error-close-btn" class="btn btn-secondary">Chiudi</button>
+            <button id="error-confirm-btn" class="btn btn-primary hidden">Conferma</button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div id="report-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-2xl w-full flex flex-col" style="max-height: 80vh;">
+        <div class="flex justify-between items-center mb-4 pb-4 border-b">
+            <h3 id="report-title" class="text-xl font-bold text-red-800">Report AI</h3>
+            <button id="report-close-btn" class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="report-content" class="text-gray-700 mb-4 overflow-y-auto flex-grow pr-2">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div id="qr-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+        <h3 id="qr-title" class="text-xl font-bold mb-4 text-red-800">QR Code Vasca</h3>
+        <div id="qr-code-display" class="flex justify-center mb-4"></div>
+        <p id="qr-info" class="text-sm text-gray-600 mb-4">Scansiona questo codice con il tuo cellulare per visualizzare i dettagli della vasca.</p>
+        <button id="qr-close-btn" class="btn btn-secondary">Chiudi</button>
+    </div>
+</div>
+
+
+<!-- Excel Import Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase SDKs -->
+<script type="module">
+    import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, addDoc, getDocs, updateDoc, onSnapshot, query, where, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Main App Router ---
+    window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewMode = urlParams.get('view');
+        const viewId = urlParams.get('id');
+
+        if (viewMode === 'vasca' && viewId) {
+            document.body.classList.add('bg-white');
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('detail-view-container').classList.remove('hidden');
+            initDetailView(viewId);
+        } else {
+            initMainApp();
+        }
+    };
+    
+    // Define all variables that will be used in both modes
+    let app, auth, db, userId;
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgPAeanvZSvMk6TaQgjHga26JjQcgX-o4",
+      authDomain: "gestione-vasche.firebaseapp.com",
+      projectId: "gestione-vasche",
+      storageBucket: "gestione-vasche.firebasestorage.app",
+      messagingSenderId: "59249217523",
+      appId: "1:59249217523:web:64edb42eb1f49c63e44c86"
+    };
+
+    // Initialize Firebase idempotently
+    if (!getApps().length) {
+        try {
+            app = initializeApp(firebaseConfig);
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+        }
+    } else {
+        app = getApps()[0];
+    }
+    db = getFirestore(app);
+    auth = getAuth(app);
+
+    function showError(message, title = "Errore") {
+        console.log("Function 'showError' called.");
+        const errorTitle = document.getElementById('error-title');
+        const errorMessage = document.getElementById('error-message');
+        const errorConfirmBtn = document.getElementById('error-confirm-btn');
+        const errorModal = document.getElementById('error-modal');
+        errorTitle.textContent = title;
+        errorMessage.textContent = message;
+        errorConfirmBtn.classList.add('hidden');
+        errorModal.classList.remove('hidden');
+    }
+
+    async function initDetailView(vascaId) {
+        const detailViewContainer = document.getElementById('detail-view-container');
+        detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
+        try {
+            // app, db, and auth are now global and initialized
+            await new Promise((resolve, reject) => {
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        resolve(user);
+                    } else {
+                        signInAnonymously(auth).then(resolve).catch(reject);
+                    }
+                });
+            });
+
+            let vascaData = null;
+            let analisiData = [];
+            let allVasche = [];
+            let dataReady = { vasca: false, analisi: false };
+
+            const checkAndRender = () => {
+                if (dataReady.vasca && dataReady.analisi) {
+                    if (vascaData) {
+                        renderDetailView(vascaData, analisiData);
+                    } else {
+                        detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg">Errore: Vasca con ID ${vascaId} non trovata.</p>`;
+                    }
+                }
+            };
+
+            onSnapshot(collection(db, "vasche"), (snapshot) => {
+                snapshot.forEach((doc) => {
+                    if(doc.id === vascaId){
+                       vascaData = { id: doc.id, ...doc.data() };
+                    }
+                });
+                dataReady.vasca = true;
+                checkAndRender();
+            });
+
+            onSnapshot(collection(db, "analisi"), (snapshot) => {
+                const allAnalisi = [];
+                snapshot.forEach((doc) => {
+                     allAnalisi.push({ id: doc.id, ...doc.data() });
+                });
+                analisiData = allAnalisi.filter(a => a.vascaId === vascaId)
+                                         .sort((a, b) => new Date(b.data) - new Date(a.data));
+                dataReady.analisi = true;
+                checkAndRender();
+            });
+
+        } catch (error) {
+            console.error("Error in detail view:", error);
+            detailViewContainer.innerHTML = '<p class="text-center text-red-500 text-lg">Impossibile caricare i dettagli. Riprova più tardi.</p>';
+        }
+    }
+
+    function renderDetailView(vasca, analyses) {
+        const detailViewContainer = document.getElementById('detail-view-container');
+        const fillPercentage = vasca.capacita > 0 ? (vasca.volumeCorrente / vasca.capacita) * 100 : 0;
+        let fillClass = 'bg-gray-400';
+        if (vasca.volumeCorrente > 0) {
+            switch (String(vasca.colore).toLowerCase()) {
+                case 'rosso': fillClass = 'bg-red-800'; break;
+                case 'bianco': fillClass = 'bg-yellow-300'; break;
+                case 'rosato': fillClass = 'bg-pink-400'; break;
+                default: fillClass = 'bg-gray-500'; break;
+            }
+        }
+
+        let analysesHtml = '<h3 class="text-xl font-semibold mt-6 mb-3 text-red-800 border-b pb-2">Storico Analisi</h3>';
+        if (analyses.length > 0) {
+            analysesHtml += analyses.map(analisi => {
+                const parametriHtml = Object.keys(analisi.parametri).map(key => `
+                    <div class="flex justify-between py-1">
+                        <span class="text-gray-600">${key}:</span>
+                        <span class="font-medium text-gray-800">${analisi.parametri[key]}</span>
+                    </div>
+                `).join('');
+                return `
+                    <div class="mb-4 p-4 bg-stone-50 rounded-lg border">
+                        <p class="font-bold text-gray-700">Data: ${analisi.data}</p>
+                        <div class="mt-2 divide-y divide-stone-200">${parametriHtml}</div>
+                        ${analisi.note ? `<p class="text-sm text-gray-500 mt-2">Note: ${analisi.note}</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            analysesHtml += '<p class="text-gray-500">Nessuna analisi registrata per questa vasca.</p>';
+        }
+
+        const html = `
+            <div class="max-w-2xl mx-auto p-4 sm:p-6">
+                 <div class="flex items-center space-x-4 mb-6">
+                    <div class="p-1 bg-white rounded-full shadow-md flex items-center justify-center">
+                        <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <defs><path id="textPath" d="M 10,50 A 40,40 0 1 1 90,50 A 40,40 0 1 1 10,50" fill="none" /></defs>
+                            <circle cx="50" cy="50" r="48" fill="#002080" stroke="#bca34d" stroke-width="1"/><circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="2" stroke-dasharray="2 2"/>
+                            <path d="M50 25 L55 45 L75 50 L55 55 L50 75 L45 55 L25 50 L45 45 Z" fill="#bca34d" /><path d="M28 30 L31 38 L39 41 L31 44 L28 52 L25 44 L17 41 L25 38 Z" fill="#bca34d" /><path d="M72 18 L75 26 L83 29 L75 32 L72 40 L69 32 L61 29 L69 26 Z" fill="#bca34d" /><line x1="60" y1="20" x2="40" y2="40" stroke="#bca34d" stroke-width="2" />
+                            <text font-family="Inter, sans-serif" font-size="12" fill="white" font-weight="bold"><textPath href="#textPath" startOffset="0%">SAN</textPath><textPath href="#textPath" startOffset="50%">LORENZO</textPath></text>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-red-900">Dettaglio Vasca ${vasca.numero}</h1>
+                 </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg border">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div class="sm:col-span-1 flex flex-col items-center justify-center">
+                            <div class="relative w-24 h-32 border-2 border-gray-400 rounded-lg flex items-end overflow-hidden">
+                                <div class="absolute inset-0 bg-white"></div>
+                                <div class="w-full ${fillClass}" style="height: ${fillPercentage}%;"></div>
+                            </div>
+                            <div class="text-center mt-2">
+                                 <p class="font-bold text-lg">${(vasca.volumeCorrente / 100).toFixed(2)} hL</p>
+                                 <p class="text-sm text-gray-500">su ${(vasca.capacita / 100).toFixed(2)} hL</p>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2 space-y-3">
+                            <div class="flex justify-between"><span class="text-gray-600">Contenuto:</span> <strong class="text-right">${vasca.contenuto}</strong></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Denominazione:</span> <strong class="text-right">${vasca.denominazione || 'N/D'}</strong></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Annata:</span> <strong class="text-right">${vasca.annata || 'N/D'}</strong></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Tipo Vasca:</span> <strong class="text-right">${vasca.tipo}</strong></div>
+                            <div class="flex justify-between"><span class="text-gray-600">Colore:</span> <strong class="text-right">${vasca.colore || 'N/D'}</strong></div>
+                            ${vasca.note ? `<div class="pt-2 border-t"><p class="text-sm text-gray-600"><strong>Note:</strong> ${vasca.note}</p></div>` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                ${analysesHtml}
+            </div>
+        `;
+        detailViewContainer.innerHTML = html;
+    }
+
+
+    function initMainApp() {
+    setLogLevel('debug');
+
+    let vascheData = [];
+    let operazioniData = [];
+    let analisiData = [];
+    let ordiniLavoroData = [];
+    let editingVascaId = null;
+    let editingOperazioneId = null;
+    let originalOpData = null;
+    let editingAnalisiId = null;
+    let editingOrdineId = null;
+    let pendingConfirmAction = null;
+
+    // !! IMPORTANTE !!
+    // Per far funzionare i QR Code, carica questo file su un servizio di hosting 
+    // (es. GitHub Pages, Netlify, Vercel) e sostituisci il placeholder qui sotto con il tuo URL pubblico.
+    const publicBaseUrl = 'REPLACE_WITH_YOUR_PUBLIC_URL'; // Es: https://tuo-utente.github.io/cantina/index.html
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    const authModal = document.getElementById('auth-modal');
+    const appContainer = document.getElementById('app-container');
+    const userIdDisplay = document.getElementById('user-id-display');
+    const errorModal = document.getElementById('error-modal');
+    const errorMessage = document.getElementById('error-message');
+    const errorTitle = document.getElementById('error-title');
+    const errorCloseBtn = document.getElementById('error-close-btn');
+    const errorConfirmBtn = document.getElementById('error-confirm-btn');
+    const reportModal = document.getElementById('report-modal');
+    const reportTitle = document.getElementById('report-title');
+    const reportContent = document.getElementById('report-content');
+    const reportCloseBtn = document.getElementById('report-close-btn');
+    const qrModal = document.getElementById('qr-modal');
+    const qrTitle = document.getElementById('qr-title');
+    const qrCodeDisplay = document.getElementById('qr-code-display');
+    const qrCloseBtn = document.getElementById('qr-close-btn');
+
+    const formVasca = document.getElementById('form-vasca');
+    const numeroVascaInput = document.getElementById('numero-vasca');
+    const listaVasche = document.getElementById('lista-vasche');
+    const vascaOrigineSelect = document.getElementById('vasca-origine');
+    const tipoTravasoSelect = document.getElementById('tipo-travaso');
+    const travasoVinoFields = document.getElementById('travaso-vino-fields');
+    const travasoFecciaVinacciaFields = document.getElementById('travaso-feccia-vinaccia-fields');
+    const vascaDestinazioneUnicaInput = document.getElementById('vasca-destinazione-unica');
+    const quantitaUnicaInput = document.getElementById('quantita-unica');
+    const volumeVascaTravasiDisplay = document.getElementById('volume-vasca-travasi-display');
+    const destinazioneContainer = document.getElementById('destinazione-container');
+    const vascaImbottigliamentoOrigineSelect = document.getElementById('vasca-imbottigliamento-origine');
+    const volumeVascaImbottigliamentoDisplay = document.getElementById('volume-vasca-imbottigliamento-display');
+    const vascaLavorazioneSelect = document.getElementById('vasca-lavorazione');
+    const volumeVascaLavorazioniDisplay = document.getElementById('volume-vasca-lavorazioni-display');
+    const tipoLavorazioneSelect = document.getElementById('tipo-lavorazione');
+    const quantitaLavorazioneDiv = document.getElementById('quantita-lavorazione-div');
+    const quantitaLavorazioneInput = document.getElementById('quantita-lavorazione');
+    const unitaQuantitaLavorazioneSelect = document.getElementById('unita-quantita-lavorazione');
+    const contenutoLavorazioneAttualeInput = document.getElementById('contenuto-lavorazione-attuale');
+    const coloreLavorazioneAttualeSelect = document.getElementById('colore-lavorazione-attuale');
+    const selectRiepilogoVasca = document.getElementById('select-riepilogo-vasca');
+    const riepilogoDettagli = document.getElementById('riepilogo-dettagli');
+    const searchMassaInput = document.getElementById('search-massa');
+    const btnSearchMassa = document.getElementById('btn-search-massa');
+    const btnResetSearch = document.getElementById('btn-reset-search');
+    const riepilogoMassaDettagli = document.getElementById('riepilogo-massa-dettagli');
+    const tabs = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const btnExportExcel = document.getElementById('btn-export-excel');
+    const btnReset = document.getElementById('btn-reset');
+    const listaTravasi = document.getElementById('lista-travasi');
+    const listaLavorazioni = document.getElementById('lista-lavorazioni');
+    const listaImbottigliamento = document.getElementById('lista-imbottigliamento');
+    const sortVascheSelect = document.getElementById('sort-vasche');
+    const sortCantinaSelect = document.getElementById('sort-cantina');
+    const sortTravasiSelect = document.getElementById('sort-travasi');
+    const sortImbottigliamentiSelect = document.getElementById('sort-imbottigliamenti');
+    const sortLavorazioniSelect = document.getElementById('sort-lavorazioni');
+    const cantinaLayout = document.getElementById('cantina-layout');
+    
+    const formTitle = document.getElementById('form-title');
+    const btnSubmitText = document.getElementById('btn-submit-text');
+    const btnCancelEdit = document.getElementById('btn-cancel-edit');
+    const btnLogout = document.getElementById('btn-logout');
+    
+    const formTravaso = document.getElementById('form-travaso');
+    const formLavorazione = document.getElementById('form-lavorazione');
+    const formImbottigliamento = document.getElementById('form-imbottigliamento');
+    const formAnalisi = document.getElementById('form-analisi');
+    const vascaAnalisiSelect = document.getElementById('vasca-analisi');
+    const listaAnalisi = document.getElementById('lista-analisi');
+    const sortAnalisiSelect = document.getElementById('sort-analisi');
+    const importExcelFile = document.getElementById('import-excel-file');
+    const btnImportExcel = document.getElementById('btn-import-excel');
+    const btnCancelAnalisi = document.getElementById('btn-cancel-analisi');
+
+    // Ordini di Lavoro Elements
+    const formOrdineLavoro = document.getElementById('form-ordine-lavoro');
+    const listaOrdini = document.getElementById('lista-ordini');
+    const vascaOrdineSelect = document.getElementById('vasca-ordine');
+    const sortOrdiniSelect = document.getElementById('sort-ordini');
+    const btnCancelOrdine = document.getElementById('btn-cancel-ordine');
+
+    // AI Assistant Elements
+    const chatWindow = document.getElementById('chat-window');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendBtn = document.getElementById('chat-send-btn');
+    const aiLoading = document.getElementById('ai-loading');
+    const btnReportSettimanale = document.getElementById('btn-report-settimanale');
+
+
+    // Analisi fields
+    const ethanolAnalisiInput = document.getElementById('ethanol-analisi');
+    const glucfrucAnalisiInput = document.getElementById('glucfruc-analisi');
+    const alctotAnalisiInput = document.getElementById('alctot-analisi');
+    const atAnalisiInput = document.getElementById('at-analisi');
+    const phAnalisiInput = document.getElementById('ph-analisi');
+    const avAnalisiInput = document.getElementById('av-analisi');
+    const malicAnalisiInput = document.getElementById('malic-analisi');
+    const lacticAnalisiInput = document.getElementById('lactic-analisi');
+    const densityAnalisiInput = document.getElementById('density-analisi');
+    const fructoseAnalisiInput = document.getElementById('fructose-analisi');
+    const glucoseAnalisiInput = document.getElementById('glucose-analisi');
+    const solforosaLibAnalisiInput = document.getElementById('solforosa-lib-analisi');
+    const solforosaTotAnalisiInput = document.getElementById('solforosa-tot-analisi');
+
+    // Auth Form Elements
+    const authForm = document.getElementById('auth-form');
+    const authEmailInput = document.getElementById('auth-email');
+    const authPasswordInput = document.getElementById('auth-password');
+    const authErrorMessage = document.getElementById('auth-error-message');
+    const btnLogin = document.getElementById('btn-login');
+    const btnRegister = document.getElementById('btn-register');
+    const rememberMeCheckbox = document.getElementById('remember-me');
+
+    function showConfirmModal(message, onConfirm) {
+        console.log("Function 'showConfirmModal' called.");
+        errorTitle.textContent = "Conferma Azione";
+        errorMessage.textContent = message;
+        errorConfirmBtn.classList.remove('hidden');
+        errorModal.classList.remove('hidden');
+        pendingConfirmAction = onConfirm;
+    }
+
+    function showReportModal(content, title = "Report") {
+        reportTitle.textContent = title;
+        reportContent.innerHTML = content.replace(/\n/g, '<br>'); // Simple line break conversion
+        reportModal.classList.remove('hidden');
+    }
+
+    // Check for saved email on page load
+    const savedEmail = localStorage.getItem('savedEmail');
+    if (savedEmail) {
+        authEmailInput.value = savedEmail;
+        rememberMeCheckbox.checked = true;
+    }
+
+    // Auth Handlers
+    btnLogin.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = authEmailInput.value;
+        const password = authPasswordInput.value;
+
+        if (rememberMeCheckbox.checked) {
+            localStorage.setItem('savedEmail', email);
+        } else {
+            localStorage.removeItem('savedEmail');
+        }
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            authErrorMessage.textContent = "Accesso fallito. Controlla email e password.";
+            authErrorMessage.classList.remove('hidden');
+        }
+    });
+
+    btnRegister.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = authEmailInput.value;
+        const password = authPasswordInput.value;
+
+        if (rememberMeCheckbox.checked) {
+            localStorage.setItem('savedEmail', email);
+        } else {
+            localStorage.removeItem('savedEmail');
+        }
+
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            authErrorMessage.textContent = "Registrazione fallita. L'email potrebbe essere già in uso o la password non è valida (min 6 caratteri).";
+            authErrorMessage.classList.remove('hidden');
+        }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            userId = user.uid;
+            userIdDisplay.textContent = userId;
+            console.log("Utente autenticato con ID:", userId);
+            authModal.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            setupRealtimeListeners();
+            setupEventListeners();
+        } else {
+            console.log("Nessun utente autenticato. Mostra il modal di accesso.");
+            appContainer.classList.add('hidden');
+            authModal.classList.remove('hidden');
+            userIdDisplay.textContent = "Non autenticato";
+        }
+    });
+
+    btnLogout.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            appContainer.classList.add('hidden');
+            authModal.classList.remove('hidden');
+        } catch (error) {
+            console.error("Errore durante il logout:", error);
+            showError("Si è verificato un errore durante il logout. Riprova.");
+        }
+    });
+
+    function setupRealtimeListeners() {
+        const vascheRef = collection(db, "vasche");
+        onSnapshot(vascheRef, (snapshot) => {
+            vascheData = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                vascheData.push({
+                    id: doc.id,
+                    ...data,
+                    capacita: Number(data.capacita),
+                    volumeCorrente: Number(data.volumeCorrente)
+                });
+            });
+            renderVascheList();
+            renderCantinaLayout();
+            updateVascaSelects();
+        }, (error) => {
+            console.error("Errore nel listener vasche:", error);
+            showError("Errore nel recupero delle vasche. Riprova più tardi.");
+        });
+
+        const operazioniRef = collection(db, "operazioni");
+        onSnapshot(operazioniRef, (snapshot) => {
+            operazioniData = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                operazioniData.push({
+                    id: doc.id,
+                    ...data,
+                    quantita: data.quantita ? Number(data.quantita) : data.quantita,
+                    volumeBottiglie: data.volumeBottiglie ? Number(data.volumeBottiglie) : data.volumeBottiglie,
+                    quantitaLavorazione: data.quantitaLavorazione ? Number(data.quantitaLavorazione) : data.quantitaLavorazione,
+                    destinazioni: data.destinazioni ? data.destinazioni.map(d => ({...d, quantita: Number(d.quantita)})) : []
+                });
+            });
+            updateRiepilogo();
+            renderTravasiList();
+            renderLavorazioniList();
+            renderImbottigliamentoList();
+            updateRiepilogoMassa();
+        }, (error) => {
+            console.error("Errore nel listener operazioni:", error);
+            showError("Errore nel recupero delle operazioni. Riprova più tardi.");
+        });
+
+        const analisiRef = collection(db, "analisi");
+        onSnapshot(analisiRef, (snapshot) => {
+            analisiData = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                analisiData.push({
+                    id: doc.id,
+                    ...data,
+                    parametri: data.parametri || {}
+                });
+            });
+            renderAnalisiList();
+            updateRiepilogo();
+        }, (error) => {
+             console.error("Errore nel listener analisi:", error);
+            showError("Errore nel recupero delle analisi. Riprova più tardi.");
+        });
+
+        const ordiniRef = collection(db, "ordini_lavoro");
+        onSnapshot(ordiniRef, (snapshot) => {
+            ordiniLavoroData = [];
+            snapshot.forEach((doc) => {
+                ordiniLavoroData.push({ id: doc.id, ...doc.data() });
+            });
+            renderOrdiniLavoroList();
+        }, (error) => {
+            console.error("Errore nel listener ordini di lavoro:", error);
+            showError("Errore nel recupero degli ordini di lavoro.");
+        });
+    }
+    
+    function setupEventListeners() {
+        formVasca.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const numero = document.getElementById('numero-vasca').value;
+            const capacitaInput = Number(document.getElementById('capacita-vasca').value);
+            const unitaCapacita = document.getElementById('unita-capacita-vasca').value;
+            const tipo = document.getElementById('tipo-vasca').value;
+            const colore = document.getElementById('colore-vasca').value;
+            const volumeInizialeInput = document.getElementById('volume-iniziale-vasca').value;
+            const unitaVolumeIniziale = document.getElementById('unita-volume-iniziale-vasca').value;
+            const contenutoInput = document.getElementById('contenuto-vasca').value;
+            const denominazioneInput = document.getElementById('denominazione-vasca').value;
+            const annata = document.getElementById('annata-vasca').value;
+            const note = document.getElementById('note-vasca').value;
+            const dataCreazione = document.getElementById('data-creazione-vasca').value;
+    
+            const isDuplicate = vascheData.some(vasca => vasca.numero === numero && vasca.id !== editingVascaId);
+            if (isDuplicate) {
+                showError("Esiste già una vasca con questo numero. I numeri delle vasche devono essere univoci.");
+                return;
+            }
+    
+            const capacita = unitaCapacita === 'hL' ? capacitaInput * 100 : capacitaInput;
+            const volumeIniziale = volumeInizialeInput ? (unitaVolumeIniziale === 'hL' ? Number(volumeInizialeInput) * 100 : Number(volumeInizialeInput)) : 0;
+            const contenuto = contenutoInput || "Vuota";
+            const denominazione = denominazioneInput || "";
+    
+            if (volumeIniziale > capacita) {
+                showError("Il volume iniziale non può essere superiore alla capacità totale della vasca.");
+                return;
+            }
+    
+            const data = { numero, capacita, tipo, colore, volumeCorrente: volumeIniziale, contenuto, denominazione, annata, note, dataCreazione };
+    
+            if (editingVascaId) {
+                await updateVasca(editingVascaId, data);
+            } else {
+                await addVasca(data);
+            }
+            
+            resetForm();
+        });
+    
+        btnCancelEdit.addEventListener('click', () => {
+            resetForm();
+        });
+    
+        sortVascheSelect.addEventListener('change', renderVascheList);
+        sortCantinaSelect.addEventListener('change', renderCantinaLayout);
+        
+        numeroVascaInput.addEventListener('input', (e) => {
+            const numero = e.target.value;
+            const existingVasca = vascheData.find(v => v.numero === numero);
+            if (existingVasca) {
+                document.getElementById('capacita-vasca').value = (existingVasca.capacita / 100);
+                document.getElementById('tipo-vasca').value = existingVasca.tipo;
+                document.getElementById('colore-vasca').value = existingVasca.colore || '';
+                document.getElementById('volume-iniziale-vasca').value = (existingVasca.volumeCorrente / 100);
+                document.getElementById('contenuto-vasca').value = existingVasca.contenuto;
+                document.getElementById('denominazione-vasca').value = existingVasca.denominazione || '';
+                document.getElementById('annata-vasca').value = existingVasca.annata;
+                document.getElementById('data-creazione-vasca').value = existingVasca.dataCreazione || '';
+                document.getElementById('note-vasca').value = existingVasca.note || '';
+            }
+        });
+    
+        vascaOrigineSelect.addEventListener('change', () => {
+            const vasca = vascheData.find(v => v.id === vascaOrigineSelect.value);
+            if (vasca) {
+                volumeVascaTravasiDisplay.textContent = `Volume corrente: ${vasca.volumeCorrente} L (${(vasca.volumeCorrente / 100).toFixed(2)} hL)`;
+                document.getElementById('annata-travaso').value = vasca.annata || '';
+                document.getElementById('colore-travaso').value = vasca.colore || '';
+            } else {
+                volumeVascaTravasiDisplay.textContent = '';
+                document.getElementById('denominazione-travaso').value = '';
+                document.getElementById('annata-travaso').value = '';
+                document.getElementById('colore-travaso').value = '';
+            }
+        });
+    
+        tipoTravasoSelect.addEventListener('change', () => {
+            if (tipoTravasoSelect.value === 'vino') {
+                travasoVinoFields.classList.remove('hidden');
+                travasoFecciaVinacciaFields.classList.add('hidden');
+            } else {
+                travasoVinoFields.classList.add('hidden');
+                travasoFecciaVinacciaFields.classList.remove('hidden');
+            }
+        });
+    
+        formTravaso.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // ... (form data retrieval)
+            const tipoTravaso = tipoTravasoSelect.value;
+            const vascaOrigineId = vascaOrigineSelect.value;
+            const denominazione = document.getElementById('denominazione-travaso').value;
+            const annata = document.getElementById('annata-travaso').value;
+            const colore = document.getElementById('colore-travaso').value;
+            const data = document.getElementById('data-travaso').value;
+            const note = document.getElementById('note-travaso').value;
+
+            // ... (new operation details retrieval) ...
+            let newDestinazioni = [];
+            let newQuantitaTotale = 0;
+            if (tipoTravaso === 'vino') {
+                const destinazioniInputs = document.querySelectorAll('#destinazione-container .destino-numero');
+                const quantitaInputs = document.querySelectorAll('#destinazione-container .destino-quantita');
+                for (let i = 0; i < destinazioniInputs.length; i++) {
+                    const numeroVasca = destinazioniInputs[i].value;
+                    const quantitaHl = quantitaInputs[i].value;
+                    if (numeroVasca && quantitaHl) {
+                        const destinoVasca = vascheData.find(v => v.numero === numeroVasca);
+                        if (!destinoVasca) { showError(`Vasca di destinazione "${numeroVasca}" non trovata.`); return; }
+                        newDestinazioni.push({ id: destinoVasca.id, numero: destinoVasca.numero, quantita: Number(quantitaHl) * 100 });
+                        newQuantitaTotale += Number(quantitaHl) * 100;
+                    }
+                }
+                if (newDestinazioni.length === 0) { showError("Seleziona almeno una vasca di destinazione."); return; }
+            } else {
+                const numeroDestino = document.getElementById('vasca-destinazione-unica').value;
+                const quantitaHl = document.getElementById('quantita-unica').value;
+                if (!numeroDestino || !quantitaHl) { showError("Inserisci vasca di destinazione e quantità."); return; }
+                const destinoVasca = vascheData.find(v => v.numero === numeroDestino);
+                if (!destinoVasca) { showError(`Vasca di destinazione "${numeroDestino}" non trovata.`); return; }
+                newQuantitaTotale = Number(quantitaHl) * 100;
+                newDestinazioni.push({ id: destinoVasca.id, numero: destinoVasca.numero, quantita: newQuantitaTotale });
+            }
+            
+            const newOrigineVasca = vascheData.find(v => v.id === vascaOrigineId);
+
+            try {
+                const batch = writeBatch(db);
+                const virtualVasche = new Map(vascheData.map(v => [v.id, JSON.parse(JSON.stringify(v))])); // Deep copy
+
+                // 1. ANNULLA
+                if (editingOperazioneId && originalOpData) {
+                    const oldSource = virtualVasche.get(originalOpData.vascaId);
+                    if (oldSource) {
+                        oldSource.volumeCorrente += originalOpData.quantita;
+                        if (oldSource.contenuto === "Vuota") oldSource.contenuto = originalOpData.contenuto;
+                    }
+                    for (const oldDest of originalOpData.destinazioni) {
+                        const dest = virtualVasche.get(oldDest.id);
+                        if (dest) {
+                            dest.volumeCorrente -= oldDest.quantita;
+                            if (dest.volumeCorrente <= 0) { // If reverting empties the tank
+                                dest.volumeCorrente = 0;
+                                dest.contenuto = "Vuota";
+                                dest.denominazione = "";
+                                // Note: We can't perfectly revert a mix, this is a simplification.
+                            }
+                        }
+                    }
+                }
+
+                // 2. VERIFICA
+                const newSource = virtualVasche.get(vascaOrigineId);
+                if (!newSource || newSource.volumeCorrente < newQuantitaTotale) {
+                    showError("Quantità di travaso superiore al volume disponibile nella vasca di origine.");
+                    return;
+                }
+                for (const newDest of newDestinazioni) {
+                    const dest = virtualVasche.get(newDest.id);
+                    if (!dest || (dest.volumeCorrente + newDest.quantita) > dest.capacita) {
+                        showError(`Il travaso supererebbe la capacità della vasca ${newDest.numero}.`);
+                        return;
+                    }
+                }
+
+                // 3. ESEGUI
+                newSource.volumeCorrente -= newQuantitaTotale;
+
+                for (const newDest of newDestinazioni) {
+                    const dest = virtualVasche.get(newDest.id);
+                    const originalContent = dest.contenuto;
+                    dest.volumeCorrente += newDest.quantita;
+                    
+                    if (tipoTravaso === 'vino') {
+                        if (originalContent.toLowerCase() === "vuota") {
+                            dest.contenuto = newSource.contenuto;
+                        } else if (newSource.contenuto.toLowerCase() !== originalContent.toLowerCase()) {
+                            dest.contenuto = `Mix: ${originalContent} + ${newSource.contenuto}`;
+                        }
+                    } else {
+                         dest.contenuto = tipoTravaso === 'feccia' ? 'Feccia' : 'Vinaccia';
+                    }
+                    dest.denominazione = denominazione;
+                    dest.annata = annata;
+                    dest.colore = colore;
+                }
+                
+                // 4. SALVA
+                const involvedIds = new Set(Array.from(virtualVasche.keys()));
+                for(const tankId of involvedIds){
+                    const finalState = virtualVasche.get(tankId);
+                     if (finalState.volumeCorrente <= 0) {
+                        finalState.volumeCorrente = 0;
+                        finalState.contenuto = 'Vuota';
+                        finalState.denominazione = '';
+                    }
+                    batch.update(doc(db, "vasche", tankId), finalState);
+                }
+                
+                const opData = { 
+                    tipo: `travaso_${tipoTravaso}`, vascaId: vascaOrigineId, destinazioni: newDestinazioni,
+                    quantita: newQuantitaTotale, data, note, contenuto: newOrigineVasca.contenuto,
+                    denominazione, annata, colore
+                };
+
+                if (editingOperazioneId) {
+                    batch.update(doc(db, "operazioni", editingOperazioneId), opData);
+                } else {
+                    batch.set(doc(collection(db, "operazioni")), opData);
+                }
+
+                await batch.commit();
+                
+                formTravaso.reset();
+                resetOperazioneForms();
+
+            } catch (error) {
+                console.error("Errore durante il travaso:", error);
+                showError("Si è verificato un errore durante il travaso. Riprova.");
+            }
+        });
+    
+        const quantitaImbottigliamentoInput = document.getElementById('quantita-imbottigliamento');
+        const unitaQuantitaImbottigliamentoSelect = document.getElementById('unita-quantita-imbottigliamento');
+        const volumeBottiglieInput = document.getElementById('volume-bottiglie');
+        const unitaVolumeBottiglieSelect = document.getElementById('unita-volume-bottiglie');
+        const numeroBottiglieInput = document.getElementById('numero-bottiglie');
+        
+        function calculateBottles() {
+            const quantitaInput = Number(quantitaImbottigliamentoInput.value);
+            const volumeBottiglieInputVal = Number(volumeBottiglieInput.value);
+            const unitaQuantita = unitaQuantitaImbottigliamentoSelect.value;
+            const unitaVolume = unitaVolumeBottiglieSelect.value;
+            
+            let quantita = unitaQuantita === 'hL' ? quantitaInput * 100 : quantitaInput;
+            let volumeBottiglie = unitaVolume === 'hL' ? volumeBottiglieInputVal * 100 : volumeBottiglieInputVal;
+            
+            if (quantita > 0 && volumeBottiglie > 0) {
+                const numeroBottiglie = Math.floor(quantita / volumeBottiglie);
+                numeroBottiglieInput.value = numeroBottiglie;
+            } else {
+                numeroBottiglieInput.value = '';
+            }
+        }
+    
+        quantitaImbottigliamentoInput.addEventListener('input', calculateBottles);
+        unitaQuantitaImbottigliamentoSelect.addEventListener('change', calculateBottles);
+        volumeBottiglieInput.addEventListener('input', calculateBottles);
+        unitaVolumeBottiglieSelect.addEventListener('change', calculateBottles);
+    
+        vascaImbottigliamentoOrigineSelect.addEventListener('change', () => {
+            const vasca = vascheData.find(v => v.id === vascaImbottigliamentoOrigineSelect.value);
+            if (vasca) {
+                volumeVascaImbottigliamentoDisplay.textContent = `Volume corrente: ${vasca.volumeCorrente} L`;
+            } else {
+                volumeVascaImbottigliamentoDisplay.textContent = '';
+            }
+        });
+    
+        document.getElementById('form-imbottigliamento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // ... (form data retrieval) ...
+             const vascaId = vascaImbottigliamentoOrigineSelect.value;
+            const denominazione = document.getElementById('denominazione-vino').value;
+            const lottoProduzione = document.getElementById('lotto-produzione').value;
+            const quantitaInput = Number(document.getElementById('quantita-imbottigliamento').value);
+            const unitaQuantita = document.getElementById('unita-quantita-imbottigliamento').value;
+            const volumeBottiglieVal = Number(document.getElementById('volume-bottiglie').value);
+            const unitaVolume = document.getElementById('unita-volume-bottiglie').value;
+            const numeroBottiglie = Number(document.getElementById('numero-bottiglie').value);
+            const data = document.getElementById('data-imbottigliamento').value;
+            const note = document.getElementById('note-imbottigliamento').value;
+    
+            const quantita = unitaQuantita === 'hL' ? quantitaInput * 100 : quantitaInput;
+            const volumeBottiglie = unitaVolume === 'hL' ? volumeBottiglieVal * 100 : volumeBottiglieVal;
+            
+            const newOrigineVasca = vascheData.find(v => v.id === vascaId);
+            if (!newOrigineVasca) {
+                showError("Vasca di origine non trovata.");
+                return;
+            }
+    
+            try {
+                const batch = writeBatch(db);
+                const virtualVasche = new Map(vascheData.map(v => [v.id, JSON.parse(JSON.stringify(v))]));
+
+                // 1. ANNULLA: Revert old operation if editing
+                if (editingOperazioneId && originalOpData) {
+                    const oldSourceVasca = virtualVasche.get(originalOpData.vascaId);
+                    if (oldSourceVasca) {
+                        oldSourceVasca.volumeCorrente += originalOpData.quantita;
+                        if(oldSourceVasca.contenuto === "Vuota"){
+                            oldSourceVasca.contenuto = originalOpData.contenuto;
+                        }
+                    }
+                }
+
+                // 2. VERIFICA: Validate new operation
+                const newSourceVascaVirtual = virtualVasche.get(vascaId);
+                if (!newSourceVascaVirtual || quantita > newSourceVascaVirtual.volumeCorrente) {
+                    showError("Quantità da imbottigliare superiore al volume disponibile nella vasca.");
+                    return;
+                }
+                
+                // 3. ESEGUI: Apply new operation to virtual state
+                newSourceVascaVirtual.volumeCorrente -= quantita;
+                
+                // 4. SALVA: Write all changes to batch
+                const involvedIds = new Set([vascaId]);
+                if(editingOperazioneId && originalOpData) involvedIds.add(originalOpData.vascaId);
+
+                for(const id of involvedIds){
+                    const finalState = virtualVasche.get(id);
+                    if(finalState.volumeCorrente <= 0){
+                        finalState.volumeCorrente = 0;
+                        finalState.contenuto = 'Vuota';
+                        finalState.denominazione = '';
+                    }
+                    batch.update(doc(db, "vasche", id), finalState);
+                }
+                
+                const opData = {
+                    tipo: 'imbottigliamento', vascaId, contenuto: newOrigineVasca.contenuto,
+                    denominazione, lottoProduzione, quantita, volumeBottiglie,
+                    numeroBottiglie, data, note
+                };
+
+                if (editingOperazioneId) {
+                    batch.update(doc(db, "operazioni", editingOperazioneId), opData);
+                } else {
+                    batch.set(doc(collection(db, "operazioni")), opData);
+                }
+                
+                await batch.commit();
+                
+                formImbottigliamento.reset();
+                resetOperazioneForms();
+
+            } catch (error) {
+                console.error("Errore durante l'imbottigliamento:", error);
+                showError("Si è verificato un errore durante l'imbottigliamento. Riprova.");
+            }
+        });
+        
+        tipoLavorazioneSelect.addEventListener('change', () => {
+            if (tipoLavorazioneSelect.value === 'Aggiunta di liquido') {
+                quantitaLavorazioneDiv.classList.remove('hidden');
+                quantitaLavorazioneInput.required = true;
+            } else {
+                quantitaLavorazioneDiv.classList.add('hidden');
+                quantitaLavorazioneInput.required = false;
+            }
+        });
+        
+        vascaLavorazioneSelect.addEventListener('change', () => {
+            const vasca = vascheData.find(v => v.id === vascaLavorazioneSelect.value);
+            if (vasca) {
+                volumeVascaLavorazioniDisplay.textContent = `Volume corrente: ${vasca.volumeCorrente} L`;
+                contenutoLavorazioneAttualeInput.value = vasca.contenuto;
+                coloreLavorazioneAttualeSelect.value = vasca.colore || '';
+            } else {
+                volumeVascaLavorazioniDisplay.textContent = '';
+                contenutoLavorazioneAttualeInput.value = '';
+                coloreLavorazioneAttualeSelect.value = '';
+            }
+        });
+    
+        formLavorazione.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vascaId = vascaLavorazioneSelect.value;
+            const tipoLavorazione = tipoLavorazioneSelect.value;
+            const contenutoLavorazioneAttuale = document.getElementById('contenuto-lavorazione-attuale').value;
+            const coloreLavorazioneAttuale = coloreLavorazioneAttualeSelect.value;
+            const contenutoLavorazione = document.getElementById('contenuto-lavorazione').value;
+            const data = document.getElementById('data-lavorazione').value;
+            const note = document.getElementById('note-lavorazione').value;
+            const quantitaInput = Number(quantitaLavorazioneInput.value);
+            const unitaQuantita = unitaQuantitaLavorazioneSelect.value;
+            
+            const vasca = vascheData.find(v => v.id === vascaId);
+            let quantitaLavorazione = 0;
+            
+            if (tipoLavorazione === "Aggiunta di liquido") {
+                if (!vasca) {
+                    showError("Vasca non trovata.");
+                    return;
+                }
+                quantitaLavorazione = unitaQuantita === 'hL' ? quantitaInput * 100 : quantitaInput;
+                
+                let vecchioVolume = originalOpData && originalOpData.tipoLavorazione === 'Aggiunta di liquido' ? originalOpData.quantitaLavorazione : 0;
+                const nuovoVolume = vasca.volumeCorrente + quantitaLavorazione - vecchioVolume;
+                
+                if (nuovoVolume > vasca.capacita) {
+                    showError("L'aggiunta di liquido supererebbe la capacità della vasca.");
+                    return;
+                }
+                
+                try {
+                    const vascaRef = doc(db, "vasche", vascaId);
+                    await updateDoc(vascaRef, { volumeCorrente: nuovoVolume, contenuto: contenutoLavorazioneAttuale, colore: coloreLavorazioneAttuale });
+                    console.log("Volume e contenuto della vasca aggiornati con successo!");
+                } catch (error) {
+                    console.error("Errore nell'aggiornamento del volume:", error);
+                    showError("Errore nell'aggiornamento del volume. Riprova.");
+                    return;
+                }
+            } else {
+                try {
+                    const vascaRef = doc(db, "vasche", vascaId);
+                    await updateDoc(vascaRef, { contenuto: contenutoLavorazioneAttuale, colore: coloreLavorazioneAttuale });
+                } catch (error) {
+                    console.error("Errore nell'aggiornamento del contenuto:", error);
+                    showError("Errore nell'aggiornamento del contenuto. Riprova.");
+                    return;
+                }
+            }
+            
+            const opData = { tipo: 'lavorazione', vascaId, tipoLavorazione, contenuto: contenutoLavorazione, contenutoLavorazioneAttuale, data, note, quantitaLavorazione, colore: coloreLavorazioneAttuale };
+            if(editingOperazioneId) {
+                await updateOperazione(editingOperazioneId, opData);
+            } else {
+                await addOperazione(opData);
+            }
+            
+            document.getElementById('form-lavorazione').reset();
+            volumeVascaLavorazioniDisplay.textContent = '';
+            contenutoLavorazioneAttualeInput.value = '';
+            resetOperazioneForms();
+        });
+    
+        selectRiepilogoVasca.addEventListener('change', updateRiepilogo);
+        
+        btnSearchMassa.addEventListener('click', () => {
+            updateRiepilogoMassa(searchMassaInput.value.toLowerCase());
+        });
+
+        btnResetSearch.addEventListener('click', () => {
+            searchMassaInput.value = '';
+            updateRiepilogoMassa();
+        });
+    
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.add('hidden'));
+                tab.classList.add('active');
+                const contentId = `content-${tab.id.split('-')[1]}`;
+                const contentDiv = document.getElementById(contentId);
+                contentDiv.classList.remove('hidden');
+            });
+        });
+        
+        btnExportExcel.addEventListener('click', () => {
+            const dataToExport = [['Numero', 'Capacità (L)', 'Volume Corrente (L)', 'Contenuto', 'Denominazione', 'Tipo', 'Colore', 'Stato (%)']];
+
+            vascheData.forEach(vasca => {
+                const fillPercentage = vasca.capacita > 0 ? ((vasca.volumeCorrente / vasca.capacita) * 100).toFixed(2) : '0.00';
+                const row = [
+                    vasca.numero,
+                    vasca.capacita,
+                    vasca.volumeCorrente,
+                    vasca.contenuto,
+                    vasca.denominazione || 'N/D',
+                    vasca.tipo,
+                    vasca.colore || 'N/D',
+                    fillPercentage
+                ];
+                dataToExport.push(row);
+            });
+
+            const worksheet = XLSX.utils.aoa_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Situazione Vasche");
+
+            XLSX.writeFile(workbook, `Situazione_Vasche_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        });
+    
+        btnReset.addEventListener('click', () => {
+            showConfirmModal("Sei sicuro di voler resettare tutti i dati di travasi, imbottigliamenti e lavorazioni? Questa operazione non può essere annullata.", resetOperazioni);
+        });
+        
+        errorCloseBtn.addEventListener('click', () => {
+            if(editingOperazioneId) {
+                resetOperazioneForms();
+            }
+            errorModal.classList.add('hidden');
+            pendingConfirmAction = null;
+        });
+    
+        errorConfirmBtn.addEventListener('click', async () => {
+            if (pendingConfirmAction) {
+                await pendingConfirmAction();
+            }
+            errorModal.classList.add('hidden');
+            pendingConfirmAction = null;
+        });
+    
+        formAnalisi.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vascaId = vascaAnalisiSelect.value;
+            const dataAnalisi = document.getElementById('data-analisi').value;
+            const noteAnalisi = document.getElementById('note-analisi').value;
+    
+            if (!vascaId || !dataAnalisi) {
+                showError("Devi selezionare una vasca e una data per l'analisi.");
+                return;
+            }
+    
+            const parametri = {};
+            if (ethanolAnalisiInput.value) parametri.Ethanol = ethanolAnalisiInput.value;
+            if (glucfrucAnalisiInput.value) parametri.GlucFruc = glucfrucAnalisiInput.value;
+            if (alctotAnalisiInput.value) parametri.AlcTot = alctotAnalisiInput.value;
+            if (atAnalisiInput.value) parametri.At = atAnalisiInput.value;
+            if (phAnalisiInput.value) parametri.pH = phAnalisiInput.value;
+            if (avAnalisiInput.value) parametri.Av = avAnalisiInput.value;
+            if (malicAnalisiInput.value) parametri.Malic = malicAnalisiInput.value;
+            if (lacticAnalisiInput.value) parametri.Lactic = lacticAnalisiInput.value;
+            if (densityAnalisiInput.value) parametri.Density = densityAnalisiInput.value;
+            if (fructoseAnalisiInput.value) parametri.Fructose = fructoseAnalisiInput.value;
+            if (glucoseAnalisiInput.value) parametri.Glucose = glucoseAnalisiInput.value;
+            if (solforosaLibAnalisiInput.value) parametri.SolforosaLib = solforosaLibAnalisiInput.value;
+            if (solforosaTotAnalisiInput.value) parametri.SolforosaTot = solforosaTotAnalisiInput.value;
+    
+            const data = {
+                tipo: 'analisi',
+                vascaId,
+                data: dataAnalisi,
+                parametri,
+                note: noteAnalisi
+            };
+    
+            if (editingAnalisiId) {
+                await updateAnalisi(editingAnalisiId, data);
+            } else {
+                await addAnalisi(data);
+            }
+            
+            resetAnalisiForm();
+        });
+        
+        btnCancelAnalisi.addEventListener('click', () => {
+            resetAnalisiForm();
+        });
+    
+        sortAnalisiSelect.addEventListener('change', renderAnalisiList);
+    
+        // Excel Import Logic
+        btnImportExcel.addEventListener('click', async () => {
+            const file = importExcelFile.files[0];
+            if (!file) {
+                showError("Seleziona un file Excel da importare.");
+                return;
+            }
+    
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }); // Use raw: false to get formatted strings
+    
+                    if (json.length < 2) {
+                        showError("Il file Excel non contiene dati validi.");
+                        return;
+                    }
+
+                    const headers = json[0].map(h => h ? String(h).toLowerCase().trim() : '');
+                    
+                    // Filter out header rows and empty rows from the data
+                    const vascaHeaderIndex = headers.indexOf('vasca');
+                    const validDataRows = json.slice(1).filter(row => {
+                        const hasContent = row.some(cell => cell !== null && cell !== '');
+                        const isNotHeader = vascaHeaderIndex === -1 || String(row[vascaHeaderIndex]).toLowerCase().trim() !== 'vasca';
+                        return hasContent && isNotHeader;
+                    });
+
+                    if (validDataRows.length === 0) {
+                        showError("Nessuna riga di dati valida trovata nel file.");
+                        return;
+                    }
+
+                    // Mappatura flessibile degli header per riconoscere più varianti
+                    const headerMap = {
+                        'vasca': 'vasca', 'numero vasca': 'vasca',
+                        'date': 'data', 'data': 'data', 'data analisi': 'data',
+                        'solforosa lib': 'solforosa lib', 'solforosa libera': 'solforosa lib', 'so2 lib': 'solforosa lib', 'so2 libera': 'solforosa lib',
+                        'solforosa tot': 'solforosa tot', 'solforosa totale': 'solforosa tot', 'so2 tot': 'solforosa tot', 'so2 totale': 'solforosa tot',
+                        'ph': 'ph',
+                        'at': 'at', 'acidità totale': 'at', 'total acid': 'at',
+                        'av': 'av', 'acidità volatile': 'av', 'va': 'av',
+                        'ethanol': 'ethanol',
+                        'glucfruc': 'glucfruc',
+                        'alctot': 'alctot',
+                        'malic': 'malic', 'malic acid': 'malic',
+                        'lactic': 'lactic', 'lactic acid': 'lactic',
+                        'density': 'density',
+                        'fructose': 'fructose',
+                        'glucose': 'glucose',
+                        'note': 'note', 'comment': 'note'
+                    };
+
+                    const mappedHeaders = headers.map(h => headerMap[h] || null); // Ignora le colonne non mappate
+
+                    const batch = writeBatch(db);
+                    const analisiRef = collection(db, "analisi");
+                    let importedCount = 0;
+    
+                    validDataRows.forEach(row => {
+                        const rowData = {};
+                        mappedHeaders.forEach((mappedHeader, i) => {
+                            if (mappedHeader && row[i] !== undefined && row[i] !== null) {
+                                rowData[mappedHeader] = row[i];
+                            }
+                        });
+                        
+                        const vascaNumero = rowData['vasca'];
+                        if (!vascaNumero) {
+                            console.warn("Riga saltata: numero vasca non trovato.", rowData);
+                            return;
+                        }
+
+                        const vasca = vascheData.find(v => String(v.numero).trim().toLowerCase() === String(vascaNumero).trim().toLowerCase());
+                        if (!vasca) {
+                            console.warn(`Vasca numero "${vascaNumero}" non trovata. Analisi ignorata.`);
+                            return;
+                        }
+                        
+                        const dataAnalisi = parseDate(rowData['data']);
+                        
+                        const parametri = {};
+                        if(rowData.ethanol) parametri.Ethanol = String(rowData.ethanol);
+                        if(rowData.glucfruc) parametri.GlucFruc = String(rowData.glucfruc);
+                        if(rowData.alctot) parametri.AlcTot = String(rowData.alctot);
+                        if(rowData.at) parametri.At = String(rowData.at);
+                        if(rowData.ph) parametri.pH = String(rowData.ph);
+                        if(rowData.av) parametri.Av = String(rowData.av);
+                        if(rowData.malic) parametri.Malic = String(rowData.malic);
+                        if(rowData.lactic) parametri.Lactic = String(rowData.lactic);
+                        if(rowData.density) parametri.Density = String(rowData.density);
+                        if(rowData.fructose) parametri.Fructose = String(rowData.fructose);
+                        if(rowData.glucose) parametri.Glucose = String(rowData.glucose);
+                        if(rowData['solforosa lib']) parametri.SolforosaLib = String(rowData['solforosa lib']);
+                        if(rowData['solforosa tot']) parametri.SolforosaTot = String(rowData['solforosa tot']);
+                        
+                        if (Object.keys(parametri).length === 0) {
+                            console.warn("Riga saltata: nessun parametro di analisi valido trovato.", rowData);
+                            return; // Salta la riga se non ci sono dati di analisi
+                        }
+                        
+                        const analisiDaSalvare = {
+                            tipo: 'analisi',
+                            vascaId: vasca.id,
+                            data: dataAnalisi,
+                            parametri: parametri,
+                            note: rowData['note'] || ''
+                        };
+                        
+                        const newDocRef = doc(analisiRef);
+                        batch.set(newDocRef, analisiDaSalvare);
+                        importedCount++;
+                    });
+
+                    await batch.commit();
+                    showError(`Importazione completata. Sono state aggiunte ${importedCount} analisi.`, "Successo");
+
+                } catch (error) {
+                    console.error("Errore durante l'importazione:", error);
+                    showError("Si è verificato un errore durante l'importazione dei dati. Controlla che il formato del file Excel sia corretto.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        sortAnalisiSelect.addEventListener('change', renderAnalisiList);
+        sortTravasiSelect.addEventListener('change', renderTravasiList);
+        sortImbottigliamentiSelect.addEventListener('change', renderImbottigliamentoList);
+        sortLavorazioniSelect.addEventListener('change', renderLavorazioniList);
+        
+        // Ordini di Lavoro Event Listeners
+        formOrdineLavoro.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                titolo: document.getElementById('titolo-ordine').value,
+                tipologia: document.getElementById('tipologia-ordine').value,
+                vascaId: document.getElementById('vasca-ordine').value,
+                descrizione: document.getElementById('descrizione-ordine').value,
+                dataScadenza: document.getElementById('data-scadenza-ordine').value,
+                priorita: document.getElementById('priorita-ordine').value,
+                stato: document.getElementById('stato-ordine').value,
+            };
+
+            if (editingOrdineId) {
+                await updateOrdineLavoro(editingOrdineId, data);
+            } else {
+                await addOrdineLavoro(data);
+            }
+            resetOrdineForm();
+        });
+
+        btnCancelOrdine.addEventListener('click', resetOrdineForm);
+        sortOrdiniSelect.addEventListener('change', renderOrdiniLavoroList);
+
+        // AI Assistant Event Listeners
+        chatSendBtn.addEventListener('click', () => handleGeminiRequest(chatInput.value));
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleGeminiRequest(chatInput.value);
+            }
+        });
+        btnReportSettimanale.addEventListener('click', () => {
+            const prompt = "Genera un sommario delle operazioni più importanti dell'ultima settimana (ultimi 7 giorni) basandoti sui dati forniti. Evidenzia i travasi, gli imbottigliamenti, le lavorazioni principali e le analisi con valori fuori norma se presenti.";
+            handleGeminiRequest(prompt, true); // Mostra il report in un modale per una migliore leggibilità
+        });
+    }
+
+    function renderVascheList() {
+        console.log("Function 'renderVascheList' called.");
+        let sortedData = [...vascheData];
+        const sortValue = sortVascheSelect.value;
+        if (sortValue === "full") {
+            sortedData = sortedData.filter(v => (v.volumeCorrente / v.capacita) > 0.95);
+        } else if (sortValue === "empty") {
+            sortedData = sortedData.filter(v => (v.volumeCorrente / v.capacita) === 0);
+        } else if (sortValue === "volume_asc") {
+            sortedData.sort((a, b) => a.volumeCorrente - b.volumeCorrente);
+        } else if (sortValue === "volume_desc") {
+            sortedData.sort((a, b) => b.volumeCorrente - a.volumeCorrente);
+        } else if (sortValue === "numero_asc") {
+            sortedData.sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
+        } else if (sortValue === "numero_desc") {
+            sortedData.sort((a, b) => b.numero.localeCompare(a.numero, undefined, { numeric: true }));
+        }
+
+        if (sortedData.length === 0) {
+            listaVasche.innerHTML = '<p class="text-center text-gray-500">Nessuna vasca trovata. Aggiungine una per iniziare!</p>';
+            return;
+        }
+        
+        const html = sortedData.map(vasca => {
+            const fillPercentage = vasca.capacita > 0 ? (vasca.volumeCorrente / vasca.capacita) * 100 : 0;
+            const fillStyle = `height: ${fillPercentage}%;`;
+            const fillClass = fillPercentage > 95 ? 'bg-red-500' : 'bg-red-700';
+
+            const formattedVolume = vasca.volumeCorrente.toFixed(0);
+            const formattedCapacita = vasca.capacita.toFixed(0);
+            const annata = vasca.annata ? `Annata: ${vasca.annata}` : '';
+
+
+            return `
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-sm">
+                <div class="flex items-center space-x-4">
+                    <div class="relative w-16 h-24 border-2 border-gray-400 rounded-lg flex items-end overflow-hidden">
+                        <div class="absolute inset-0 bg-white"></div>
+                        <div class="w-full ${fillClass} transition-all duration-500 ease-in-out" style="${fillStyle}"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold">${vasca.numero}</h4>
+                        <p class="text-sm text-gray-600">Tipo: ${vasca.tipo}</p>
+                        <p class="text-sm text-gray-600">Contenuto: <strong>${vasca.contenuto}</strong></p>
+                        <p class="text-sm text-gray-600">Denominazione: <strong>${vasca.denominazione || 'N/D'}</strong></p>
+                        <p class="text-sm text-gray-600">${annata}</p>
+                        <p class="text-sm font-semibold text-gray-800">Volume: ${formattedVolume} L / ${formattedCapacita} L</p>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <button class="btn btn-secondary text-sm edit-vasca-btn" data-id="${vasca.id}">Modifica</button>
+                    <button class="btn btn-secondary text-sm qr-vasca-btn" data-id="${vasca.id}" data-numero="${vasca.numero}">Mostra QR</button>
+                    <button class="btn btn-secondary text-sm delete-vasca-btn" data-id="${vasca.id}">Elimina</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+        listaVasche.innerHTML = html;
+
+        document.querySelectorAll('.edit-vasca-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                editingVascaId = e.target.dataset.id;
+                const vascaToEdit = vascheData.find(v => v.id === editingVascaId);
+                if (vascaToEdit) {
+                    numeroVascaInput.value = vascaToEdit.numero;
+                    document.getElementById('capacita-vasca').value = (vascaToEdit.capacita / 100).toFixed(2);
+                    document.getElementById('unita-capacita-vasca').value = 'hL';
+                    document.getElementById('tipo-vasca').value = vascaToEdit.tipo;
+                    document.getElementById('colore-vasca').value = vascaToEdit.colore;
+                    document.getElementById('volume-iniziale-vasca').value = (vascaToEdit.volumeCorrente / 100).toFixed(2);
+                    document.getElementById('unita-volume-iniziale-vasca').value = 'hL';
+                    document.getElementById('contenuto-vasca').value = vascaToEdit.contenuto;
+                    document.getElementById('denominazione-vasca').value = vascaToEdit.denominazione;
+                    document.getElementById('annata-vasca').value = vascaToEdit.annata;
+                    document.getElementById('data-creazione-vasca').value = vascaToEdit.dataCreazione;
+                    document.getElementById('note-vasca').value = vascaToEdit.note;
+                    formTitle.textContent = 'Modifica Vasca';
+                    btnSubmitText.textContent = 'Aggiorna Vasca';
+                    btnCancelEdit.classList.remove('hidden');
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete-vasca-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idToDelete = e.target.dataset.id;
+                showConfirmModal("Sei sicuro di voler eliminare questa vasca? Non potrai recuperare i dati.", async () => {
+                    try {
+                        await deleteDoc(doc(db, "vasche", idToDelete));
+                        console.log("Vasca eliminata con successo!");
+                        resetForm();
+                    } catch (error) {
+                        console.error("Errore nell'eliminazione della vasca:", error);
+                        showError("Si è verificato un errore durante l'eliminazione. Riprova.");
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.qr-vasca-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const vascaId = e.target.dataset.id;
+                const vascaNumero = e.target.dataset.numero;
+                showQrModal(vascaId, vascaNumero);
+            });
+        });
+    }
+    
+    function showQrModal(vascaId, vascaNumero) {
+        const qrInfoPara = document.getElementById('qr-info');
+        let url;
+
+        if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
+            // Se l'URL non è stato configurato, mostra un messaggio di aiuto e un testo nel QR.
+            const vasca = vascheData.find(v => v.id === vascaId);
+            url = `Vasca: ${vasca.numero}\nContenuto: ${vasca.contenuto}\nVolume: ${vasca.volumeCorrente} L`;
+            qrInfoPara.innerHTML = `<strong class='text-red-700'>Azione richiesta:</strong><br>Per generare un link scansionabile, carica prima questo file online e poi modifica la costante 'publicBaseUrl' nel codice con il tuo URL pubblico.`;
+            qrInfoPara.className = 'text-sm text-left bg-amber-50 p-3 rounded-md border border-amber-200';
+        } else {
+            // Se l'URL è configurato, crea il link completo.
+            url = publicBaseUrl.split('?')[0] + `?view=vasca&id=${vascaId}`;
+            qrInfoPara.textContent = 'Scansiona questo codice con il tuo cellulare per visualizzare i dettagli della vasca.';
+            qrInfoPara.className = 'text-sm text-gray-600 mb-4'; // Reset styles
+        }
+
+        qrCodeDisplay.innerHTML = ''; // Clear previous QR code
+        try {
+            const qr = qrcode(0, 'L');
+            qr.addData(url);
+            qr.make();
+            qrCodeDisplay.innerHTML = qr.createImgTag(6, 8); // (cellSize, margin)
+            qrTitle.textContent = `QR Code Vasca ${vascaNumero}`;
+            qrModal.classList.remove('hidden');
+        } catch (e) {
+            console.error("Errore generazione QR Code:", e);
+            showError("Impossibile generare il QR code.");
+        }
+    }
+
+    qrCloseBtn.addEventListener('click', () => {
+        qrModal.classList.add('hidden');
+    });
+
+    function renderCantinaLayout() {
+        console.log("Function 'renderCantinaLayout' called.");
+        let sortedData = [...vascheData];
+        const sortValue = sortCantinaSelect.value;
+        if (sortValue === "volume_asc") {
+            sortedData.sort((a, b) => a.volumeCorrente - b.volumeCorrente);
+        } else if (sortValue === "volume_desc") {
+            sortedData.sort((a, b) => b.volumeCorrente - a.volumeCorrente);
+        } else if (sortValue === "numero_asc") {
+            sortedData.sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
+        } else if (sortValue === "numero_desc") {
+            sortedData.sort((a, b) => b.numero.localeCompare(a.numero, undefined, { numeric: true }));
+        }
+
+        if (sortedData.length === 0) {
+            cantinaLayout.innerHTML = '<p class="text-center text-gray-500">Nessuna vasca trovata.</p>';
+            return;
+        }
+
+        const html = sortedData.map(vasca => {
+            const fillPercentage = vasca.capacita > 0 ? (vasca.volumeCorrente / vasca.capacita) * 100 : 0;
+            const liquidHeight = fillPercentage > 100 ? 100 : fillPercentage;
+            const fillStyle = `height: ${liquidHeight}%;`;
+            
+            let fillClass = 'bg-gray-400'; // Default for empty
+            if (vasca.volumeCorrente > 0) {
+                 switch (String(vasca.colore).toLowerCase()) {
+                    case 'rosso':
+                        fillClass = 'bg-red-800';
+                        break;
+                    case 'bianco':
+                        fillClass = 'bg-yellow-300';
+                        break;
+                    case 'rosato':
+                        fillClass = 'bg-pink-400';
+                        break;
+                    default:
+                        fillClass = 'bg-gray-500'; // Generic color for other contents
+                        break;
+                }
+            }
+
+            const formattedVolume = (vasca.volumeCorrente / 100).toFixed(2);
+            const formattedCapacita = (vasca.capacita / 100).toFixed(2);
+
+            return `
+            <div class="cantina-item" data-id="${vasca.id}">
+                <div class="vasca-icon-container">
+                    <div class="vasca-top"></div>
+                    <div class="vasca-body"></div>
+                    <div class="vasca-liquid ${fillClass}" style="${fillStyle}"></div>
+                </div>
+                <h4 class="font-bold mt-2 text-md">${vasca.numero}</h4>
+                <p class="text-sm text-gray-600">${vasca.contenuto}</p>
+                <p class="text-xs text-gray-500">${formattedVolume} / ${formattedCapacita} hL</p>
+            </div>
+            `;
+        }).join('');
+        cantinaLayout.innerHTML = html;
+
+        // Aggiunge il gestore di eventi per il doppio clic
+        document.querySelectorAll('.cantina-item').forEach(item => {
+            item.addEventListener('dblclick', (e) => {
+                const vascaId = e.currentTarget.dataset.id;
+                document.getElementById('tab-riepilogo').click();
+                selectRiepilogoVasca.value = vascaId;
+                updateRiepilogo();
+            });
+        });
+    }
+
+    function updateVascaSelects() {
+        console.log("Function 'updateVascaSelects' called.");
+        const sortedVasche = [...vascheData].sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
+        const selectElements = [vascaOrigineSelect, vascaImbottigliamentoOrigineSelect, vascaLavorazioneSelect, vascaAnalisiSelect, selectRiepilogoVasca, vascaOrdineSelect];
+        selectElements.forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = '';
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = select.id === 'vasca-ordine' ? "Nessuna vasca associata" : "Seleziona una vasca";
+            select.appendChild(defaultOption);
+
+            sortedVasche.forEach(vasca => {
+                const option = document.createElement('option');
+                option.value = vasca.id;
+                option.textContent = vasca.numero;
+                select.appendChild(option);
+            });
+             select.value = currentValue;
+        });
+    }
+
+    function updateRiepilogo() {
+        console.log("Function 'updateRiepilogo' called.");
+        const vascaId = selectRiepilogoVasca.value;
+        const detailsDiv = riepilogoDettagli;
+        
+        if (!vascaId) {
+            detailsDiv.innerHTML = '<p class="text-center text-gray-500">Seleziona una vasca per visualizzare le operazioni.</p>';
+            return;
+        }
+
+        const vasca = vascheData.find(v => v.id === vascaId);
+        if (!vasca) {
+            detailsDiv.innerHTML = '<p class="text-center text-gray-500">Dettagli vasca non trovati.</p>';
+            return;
+        }
+        
+        const operazioniVasca = operazioniData.filter(op => op.vascaId === vascaId || (op.destinazioni && op.destinazioni.some(d => d.id === vascaId)));
+        const analisiVasca = analisiData.filter(analisi => analisi.vascaId === vascaId);
+        
+        let html = `
+            <div class="p-4 bg-red-50 rounded-lg shadow-inner mb-4">
+                <h3 class="text-xl font-bold">Dettagli Vasca: ${vasca.numero}</h3>
+                <p><strong>Tipo:</strong> ${vasca.tipo}</p>
+                <p><strong>Capacità:</strong> ${vasca.capacita} L</p>
+                <p><strong>Volume Corrente:</strong> ${vasca.volumeCorrente} L</p>
+                <p><strong>Contenuto:</strong> ${vasca.contenuto}</p>
+                <p><strong>Denominazione:</strong> ${vasca.denominazione || 'N/D'}</strong></p>
+                <p><strong>Annata:</strong> ${vasca.annata || 'Non specificata'}</p>
+                <p><strong>Colore:</strong> ${vasca.colore || 'Non specificato'}</p>
+                <p><strong>Note:</strong> ${vasca.note || 'Nessuna nota'}</p>
+            </div>
+            
+            <h4 class="text-lg font-bold mb-2">Storico Operazioni</h4>
+        `;
+        
+        if (operazioniVasca.length === 0 && analisiVasca.length === 0) {
+            html += '<p class="text-center text-gray-500">Nessuna operazione o analisi registrata per questa vasca.</p>';
+        } else {
+            const allEvents = [...operazioniVasca, ...analisiVasca].sort((a, b) => new Date(b.data) - new Date(a.data));
+            allEvents.forEach(op => {
+                let opDetails = '';
+                if (op.tipo && op.tipo.startsWith('travaso')) {
+                    const tipo = op.tipo.split('_')[1];
+                    const origine = vascheData.find(v => v.id === op.vascaId);
+                    const destinazioni = op.destinazioni.map(d => {
+                        const destVasca = vascheData.find(v => v.id === d.id);
+                        return `${destVasca ? destVasca.numero : 'Vasca Sconosciuta'} (${d.quantita} L)`;
+                    }).join(', ');
+                    opDetails = `<strong>Tipo:</strong> Travaso ${tipo} <br> <strong>Da:</strong> ${origine ? origine.numero : 'Vasca Sconosciuta'} <br> <strong>A:</strong> ${destinazioni} <br> <strong>Quantità Totale:</strong> ${op.quantita} L <br> <strong>Denominazione Assegnata:</strong> ${op.denominazione || 'N/D'}`;
+                } else if (op.tipo === 'imbottigliamento') {
+                    opDetails = `<strong>Tipo:</strong> Imbottigliamento <br> <strong>Quantità:</strong> ${op.quantita} L <br> <strong>Numero Bottiglie:</strong> ${op.numeroBottiglie} <br> <strong>Denominazione:</strong> ${op.denominazione}`;
+                } else if (op.tipo === 'lavorazione') {
+                     opDetails = `<strong>Tipo:</strong> Lavorazione (${op.tipoLavorazione}) <br> <strong>Vasca:</strong> ${vasca ? vasca.numero : 'Sconosciuta'}`;
+                    if (op.quantitaLavorazione && op.quantitaLavorazione > 0) {
+                        opDetails += `<br> <strong>Quantità aggiunta:</strong> ${op.quantitaLavorazione} L`;
+                    }
+                    opDetails += `<br> <strong>Contenuto:</strong> ${op.contenutoLavorazioneAttuale}`;
+                    opDetails += `<br> <strong>Aggiunte:</strong> ${op.contenuto || 'Nessuna'}`;
+                } else if (op.tipo === 'analisi') {
+                    opDetails = `<strong>Tipo:</strong> Analisi di Laboratorio <br> <strong>Parametri:</strong> ${Object.keys(op.parametri).map(key => `${key}: ${op.parametri[key]}`).join(', ')}`;
+                }
+                html += `
+                    <div class="p-4 border-l-4 border-red-400 bg-gray-50 rounded-lg shadow-sm mb-2">
+                        <p class="text-sm text-gray-500">${op.data}</p>
+                        <p class="font-medium">${opDetails}</p>
+                        <p class="text-sm text-gray-700 mt-1">Note: ${op.note || 'Nessuna'}</p>
+                    </div>
+                `;
+            });
+        }
+        
+        detailsDiv.innerHTML = html;
+    }
+
+    function renderTravasiList() {
+        console.log("Function 'renderTravasiList' called.");
+        const travasi = operazioniData.filter(op => op.tipo && op.tipo.startsWith('travaso'));
+        let sortedTravasi = [...travasi];
+        const sortValue = sortTravasiSelect.value;
+        if (sortValue === "data_asc") {
+            sortedTravasi.sort((a, b) => new Date(a.data) - new Date(b.data));
+        } else if (sortValue === "data_desc") {
+            sortedTravasi.sort((a, b) => new Date(b.data) - new Date(a.data));
+        } else if (sortValue === "quantita_asc") {
+            sortedTravasi.sort((a, b) => a.quantita - b.quantita);
+        } else if (sortValue === "quantita_desc") {
+            sortedTravasi.sort((a, b) => b.quantita - a.quantita);
+        }
+
+        if (sortedTravasi.length === 0) {
+            listaTravasi.innerHTML = '<p class="text-center text-gray-500">Nessun travaso registrato.</p>';
+            return;
+        }
+
+        const html = sortedTravasi.map(travaso => {
+            const origine = vascheData.find(v => v.id === travaso.vascaId);
+            const destinazioni = travaso.destinazioni.map(d => {
+                const destVasca = vascheData.find(v => v.id === d.id);
+                return `${destVasca ? destVasca.numero : 'Vasca Sconosciuta'} (${(d.quantita / 100).toFixed(2)} hL)`;
+            }).join(', ');
+
+            return `
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold">Travaso: ${origine ? origine.numero : 'Vasca Sconosciuta'} -> ${destinazioni}</h4>
+                    <p class="text-sm text-gray-600">Denominazione Assegnata: ${travaso.denominazione || 'N/D'} Annata: ${travaso.annata || 'N/D'}</p>
+                     <p class="text-sm text-gray-600">Colore: ${travaso.colore || 'N/D'}</p>
+                    <p class="text-sm text-gray-600">Quantità totale: ${(travaso.quantita / 100).toFixed(2)} hL</p>
+                    <p class="text-sm text-gray-600">Data: ${travaso.data}</p>
+                    <p class="text-xs text-gray-500 mt-1">Note: ${travaso.note || 'Nessuna'}</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="btn btn-secondary text-sm edit-travaso-btn" data-id="${travaso.id}">Modifica</button>
+                    <button class="btn btn-secondary text-sm delete-travaso-btn" data-id="${travaso.id}">Elimina</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+        listaTravasi.innerHTML = html;
+        addOperationEventListeners();
+    }
+
+    function renderLavorazioniList() {
+        console.log("Function 'renderLavorazioniList' called.");
+        const lavorazioni = operazioniData.filter(op => op.tipo === 'lavorazione');
+        let sortedLavorazioni = [...lavorazioni];
+        const sortValue = sortLavorazioniSelect.value;
+        if (sortValue === "data_asc") {
+            sortedLavorazioni.sort((a, b) => new Date(a.data) - new Date(b.data));
+        } else if (sortValue === "data_desc") {
+            sortedLavorazioni.sort((a, b) => new Date(b.data) - new Date(a.data));
+        } else if (sortValue === "tipo_lavorazione") {
+            sortedLavorazioni.sort((a, b) => a.tipoLavorazione.localeCompare(b.tipoLavorazione));
+        }
+
+        if (sortedLavorazioni.length === 0) {
+            listaLavorazioni.innerHTML = '<p class="text-center text-gray-500">Nessuna lavorazione registrata.</p>';
+            return;
+        }
+
+        const html = sortedLavorazioni.map(lav => {
+            const vasca = vascheData.find(v => v.id === lav.vascaId);
+            return `
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold">Lavorazione: ${lav.tipoLavorazione} in ${vasca ? vasca.numero : 'Vasca Sconosciuta'}</h4>
+                    <p class="text-sm text-gray-600">Contenuto: <strong>${lav.contenutoLavorazioneAttuale || 'N/D'}</strong></p>
+                    <p class="text-sm text-gray-600">Aggiunte: ${lav.contenuto || 'Nessuna'}</p>
+                    <p class="text-sm text-gray-600">Data: ${lav.data}</p>
+                    <p class="text-xs text-gray-500 mt-1">Note: ${lav.note || 'Nessuna'}</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="btn btn-secondary text-sm edit-lavorazione-btn" data-id="${lav.id}">Modifica</button>
+                    <button class="btn btn-secondary text-sm delete-lavorazione-btn" data-id="${lav.id}">Elimina</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+        listaLavorazioni.innerHTML = html;
+        addOperationEventListeners();
+    }
+
+    function renderImbottigliamentoList() {
+        console.log("Function 'renderImbottigliamentoList' called.");
+        const imbottigliamenti = operazioniData.filter(op => op.tipo === 'imbottigliamento');
+        let sortedImbottigliamenti = [...imbottigliamenti];
+        const sortValue = sortImbottigliamentiSelect.value;
+        if (sortValue === "data_asc") {
+            sortedImbottigliamenti.sort((a, b) => new Date(a.data) - new Date(b.data));
+        } else if (sortValue === "data_desc") {
+            sortedImbottigliamenti.sort((a, b) => new Date(b.data) - new Date(a.data));
+        } else if (sortValue === "quantita_asc") {
+            sortedImbottigliamenti.sort((a, b) => a.quantita - b.quantita);
+        } else if (sortValue === "quantita_desc") {
+            sortedImbottigliamenti.sort((a, b) => b.quantita - a.quantita);
+        } else if (sortValue === "denominazione") {
+            sortedImbottigliamenti.sort((a, b) => a.denominazione.localeCompare(b.denominazione));
+        } else if (sortValue === "lotto") {
+            sortedImbottigliamenti.sort((a, b) => a.lottoProduzione.localeCompare(b.lottoProduzione));
+        }
+        
+        if (sortedImbottigliamenti.length === 0) {
+            listaImbottigliamento.innerHTML = '<p class="text-center text-gray-500">Nessun imbottigliamento registrato.</p>';
+            return;
+        }
+
+        const html = sortedImbottigliamenti.map(imb => {
+            const vasca = vascheData.find(v => v.id === imb.vascaId);
+            return `
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between items-center">
+                <div>
+                    <h4 class="font-bold">Imbottigliamento: ${imb.denominazione || 'N/D'}</h4>
+                    <p class="text-sm text-gray-600">Vasca di origine: ${vasca ? vasca.numero : 'Sconosciuta'}</p>
+                    <p class="text-sm text-gray-600">Lotto: ${imb.lottoProduzione || 'N/D'}</p>
+                    <p class="text-sm text-gray-600">Quantità: ${(imb.quantita / 100).toFixed(2)} hL (${imb.numeroBottiglie} bottiglie)</p>
+                    <p class="text-sm text-gray-600">Data: ${imb.data}</p>
+                    <p class="text-xs text-gray-500 mt-1">Note: ${imb.note || 'Nessuna'}</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="btn btn-secondary text-sm edit-imbottigliamento-btn" data-id="${imb.id}">Modifica</button>
+                    <button class="btn btn-secondary text-sm delete-imbottigliamento-btn" data-id="${imb.id}">Elimina</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+        listaImbottigliamento.innerHTML = html;
+        addOperationEventListeners();
+    }
+    
+    function updateRiepilogoMassa(searchQuery = '') {
+        console.log("Function 'updateRiepilogoMassa' called.");
+        const detailsDiv = riepilogoMassaDettagli;
+
+        if (!searchQuery) {
+            detailsDiv.innerHTML = '<p class="text-center text-gray-500">Cerca per visualizzare i movimenti.</p>';
+            return;
+        }
+
+        // 1. Cerca le vasche corrispondenti (stato attuale)
+        const filteredVasche = vascheData.filter(vasca => {
+            const searchInContenuto = vasca.contenuto && vasca.contenuto.toLowerCase().includes(searchQuery);
+            const searchInDenominazione = vasca.denominazione && vasca.denominazione.toLowerCase().includes(searchQuery);
+            return searchInContenuto || searchInDenominazione;
+        });
+
+        // 2. Cerca le operazioni corrispondenti (storico)
+        const filteredOperazioni = operazioniData.filter(op => {
+            const searchInContenuto = op.contenuto && op.contenuto.toLowerCase().includes(searchQuery);
+            const searchInDenominazione = op.denominazione && op.denominazione.toLowerCase().includes(searchQuery);
+            return searchInContenuto || searchInDenominazione;
+        });
+
+        if (filteredVasche.length === 0 && filteredOperazioni.length === 0) {
+            detailsDiv.innerHTML = '<p class="text-center text-gray-500">Nessuna vasca o operazione trovata per il termine cercato.</p>';
+            return;
+        }
+
+        let html = '';
+
+        // Genera HTML per le vasche
+        if (filteredVasche.length > 0) {
+            html += '<h4 class="text-lg font-bold mb-2">Vasche Attuali Corrispondenti</h4>';
+            filteredVasche.forEach(vasca => {
+                html += `
+                    <div class="p-4 border-l-4 border-blue-400 bg-gray-50 rounded-lg shadow-sm mb-2">
+                        <p class="font-bold">Vasca: ${vasca.numero}</p>
+                        <p><strong>Contenuto:</strong> ${vasca.contenuto}</p>
+                        <p><strong>Denominazione:</strong> ${vasca.denominazione || 'N/D'}</strong></p>
+                        <p><strong>Volume:</strong> ${vasca.volumeCorrente} / ${vasca.capacita} L</p>
+                    </div>
+                `;
+            });
+        }
+
+        // Genera HTML per le operazioni
+        if (filteredOperazioni.length > 0) {
+            html += '<h4 class="text-lg font-bold mt-6 mb-2">Storico Operazioni Corrispondenti</h4>';
+            const sortedOperazioni = [...filteredOperazioni].sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            sortedOperazioni.forEach(op => {
+                let opDetails = '';
+                if (op.tipo.startsWith('travaso')) {
+                    const tipo = op.tipo.split('_')[1];
+                    const origine = vascheData.find(v => v.id === op.vascaId);
+                    const destinazioni = op.destinazioni.map(d => {
+                        const destVasca = vascheData.find(v => v.id === d.id);
+                        return `${destVasca ? destVasca.numero : 'Vasca Sconosciuta'} (${(d.quantita / 100).toFixed(2)} hL)`;
+                    }).join(', ');
+                    opDetails = `<strong>Tipo:</strong> Travaso ${tipo} <br> <strong>Da:</strong> ${origine ? origine.numero : 'Vasca Sconosciuta'} <br> <strong>A:</strong> ${destinazioni} <br> <strong>Quantità Totale:</strong> ${(op.quantita / 100).toFixed(2)} hL <br> <strong>Denominazione Assegnata:</strong> ${op.denominazione || 'N/D'}`;
+                } else if (op.tipo === 'imbottigliamento') {
+                    opDetails = `<strong>Tipo:</strong> Imbottigliamento <br> <strong>Vasca di Origine:</strong> ${vascheData.find(v => v.id === op.vascaId)?.numero || 'Sconosciuta'} <br> <strong>Quantità:</strong> ${(op.quantita / 100).toFixed(2)} hL <br> <strong>Denominazione:</strong> ${op.denominazione}`;
+                } else if (op.tipo === 'lavorazione') {
+                    opDetails = `<strong>Tipo:</strong> Lavorazione (${op.tipoLavorazione}) <br> <strong>in Vasca:</strong> ${vascheData.find(v => v.id === op.vascaId)?.numero || 'Sconosciuta'} <br> <strong>Dettagli:</strong> ${op.contenuto || 'Nessuno'}`;
+                }
+
+                html += `
+                    <div class="p-4 border-l-4 border-red-400 bg-gray-50 rounded-lg shadow-sm mb-2">
+                        <p class="text-sm text-gray-500">${op.data}</p>
+                        <p class="font-medium">${opDetails}</p>
+                        <p class="text-sm text-gray-700 mt-1">Note: ${op.note || 'Nessuna'}</p>
+                    </div>
+                `;
+            });
+        }
+        
+        detailsDiv.innerHTML = html;
+    }
+
+    function renderAnalisiList() {
+        console.log("Function 'renderAnalisiList' called.");
+        let sortedAnalisi = [...analisiData];
+        const sortValue = sortAnalisiSelect.value;
+        if (sortValue === "data_asc") {
+            sortedAnalisi.sort((a, b) => new Date(a.data) - new Date(b.data));
+        } else if (sortValue === "data_desc") {
+            sortedAnalisi.sort((a, b) => new Date(b.data) - new Date(a.data));
+        } else if (sortValue === "vasca") {
+            sortedAnalisi.sort((a, b) => {
+                const vascaA = vascheData.find(v => v.id === a.vascaId);
+                const vascaB = vascheData.find(v => v.id === b.vascaId);
+                const numeroA = vascaA ? vascaA.numero : '';
+                const numeroB = vascaB ? vascaB.numero : '';
+                return numeroA.localeCompare(numeroB, undefined, { numeric: true });
+            });
+        }
+        
+        if (sortedAnalisi.length === 0) {
+            listaAnalisi.innerHTML = '<p class="text-center text-gray-500">Nessuna analisi registrata.</p>';
+            return;
+        }
+
+        const html = sortedAnalisi.map(analisi => {
+            const vasca = vascheData.find(v => v.id === analisi.vascaId);
+            const parametriHtml = Object.keys(analisi.parametri).map(key => `<p class="text-xs text-gray-600">${key}: ${analisi.parametri[key]}</p>`).join('');
+            return `
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between items-start">
+                <div>
+                    <h4 class="font-bold">Analisi per Vasca: ${vasca ? vasca.numero : 'Sconosciuta'}</h4>
+                    <p class="text-sm text-gray-600">Data: ${analisi.data}</p>
+                    <div class="mt-2">
+                        ${parametriHtml}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Note: ${analisi.note || 'Nessuna'}</p>
+                </div>
+                 <div class="flex flex-col space-y-2">
+                    <button class="btn btn-secondary text-sm edit-analisi-btn" data-id="${analisi.id}">Modifica</button>
+                    <button class="btn btn-primary text-sm interpret-ai-btn" data-id="${analisi.id}">Interpreta con AI</button>
+                    <button class="btn btn-secondary text-sm delete-analisi-btn" data-id="${analisi.id}">Elimina</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+        listaAnalisi.innerHTML = html;
+        addAnalisiEventListeners();
+    }
+    
+    function addOperationEventListeners() {
+        document.querySelectorAll('.edit-travaso-btn, .edit-lavorazione-btn, .edit-imbottigliamento-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                editingOperazioneId = e.target.dataset.id;
+                const op = operazioniData.find(o => o.id === editingOperazioneId);
+                if (op) {
+                    originalOpData = JSON.parse(JSON.stringify(op)); // Deep copy for safe revert
+                    switch(op.tipo) {
+                        case 'travaso_vino':
+                        case 'travaso_feccia':
+                        case 'travaso_vinaccia':
+                            document.getElementById('tab-travasi').click();
+                            tipoTravasoSelect.value = op.tipo.split('_')[1];
+                            vascaOrigineSelect.value = op.vascaId;
+                            document.getElementById('denominazione-travaso').value = op.denominazione || '';
+                            document.getElementById('annata-travaso').value = op.annata || '';
+                            document.getElementById('colore-travaso').value = op.colore || '';
+                            document.getElementById('data-travaso').value = op.data;
+                            document.getElementById('note-travaso').value = op.note;
+                            if (op.tipo === 'travaso_vino') {
+                                travasoVinoFields.classList.remove('hidden');
+                                travasoFecciaVinacciaFields.classList.add('hidden');
+                                const destInputs = destinazioneContainer.querySelectorAll('.destino-numero');
+                                const quantInputs = destinazioneContainer.querySelectorAll('.destino-quantita');
+                                destInputs.forEach((input, i) => {
+                                    input.value = op.destinazioni[i]?.numero || '';
+                                    quantInputs[i].value = op.destinazioni[i] ? (op.destinazioni[i].quantita / 100).toFixed(2) : '';
+                                });
+                            } else {
+                                travasoVinoFields.classList.add('hidden');
+                                travasoFecciaVinacciaFields.classList.remove('hidden');
+                                vascaDestinazioneUnicaInput.value = op.destinazioni[0]?.numero || '';
+                                quantitaUnicaInput.value = op.destinazioni[0] ? (op.destinazioni[0].quantita / 100).toFixed(2) : '';
+                            }
+                            break;
+                        case 'lavorazione':
+                            document.getElementById('tab-lavorazioni').click();
+                            vascaLavorazioneSelect.value = op.vascaId;
+                            tipoLavorazioneSelect.value = op.tipoLavorazione;
+                            document.getElementById('contenuto-lavorazione-attuale').value = op.contenutoLavorazioneAttuale;
+                            document.getElementById('colore-lavorazione-attuale').value = op.colore;
+                            document.getElementById('contenuto-lavorazione').value = op.contenuto;
+                            document.getElementById('data-lavorazione').value = op.data;
+                            document.getElementById('note-lavorazione').value = op.note;
+                             if (op.tipoLavorazione === 'Aggiunta di liquido') {
+                                quantitaLavorazioneDiv.classList.remove('hidden');
+                                quantitaLavorazioneInput.value = (op.quantitaLavorazione / 100).toFixed(2);
+                            } else {
+                                quantitaLavorazioneDiv.classList.add('hidden');
+                            }
+                            break;
+                        case 'imbottigliamento':
+                            document.getElementById('tab-imbottigliamento').click();
+                            vascaImbottigliamentoOrigineSelect.value = op.vascaId;
+                            document.getElementById('denominazione-vino').value = op.denominazione;
+                            document.getElementById('lotto-produzione').value = op.lottoProduzione;
+                            document.getElementById('quantita-imbottigliamento').value = (op.quantita / 100).toFixed(2);
+                            document.getElementById('volume-bottiglie').value = op.volumeBottiglie;
+                            document.getElementById('numero-bottiglie').value = op.numeroBottiglie;
+                            document.getElementById('data-imbottigliamento').value = op.data;
+                            document.getElementById('note-imbottigliamento').value = op.note;
+                            break;
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete-travaso-btn, .delete-lavorazione-btn, .delete-imbottigliamento-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idToDelete = e.target.dataset.id;
+                const op = operazioniData.find(o => o.id === idToDelete);
+                if (!op) return;
+
+                showConfirmModal("Sei sicuro di voler eliminare questa operazione? Verrà ripristinato il volume delle vasche coinvolte.", async () => {
+                    await deleteOperationAndUpdateVolumes(op);
+                });
+            });
+        });
+    }
+
+    async function deleteOperationAndUpdateVolumes(op) {
+        try {
+            const batch = writeBatch(db);
+            const virtualVasche = new Map(vascheData.map(v => [v.id, JSON.parse(JSON.stringify(v))]));
+
+            if (op.tipo.startsWith('travaso')) {
+                const sourceVasca = virtualVasche.get(op.vascaId);
+                if (sourceVasca) {
+                    sourceVasca.volumeCorrente += op.quantita;
+                    if (sourceVasca.contenuto === 'Vuota') sourceVasca.contenuto = op.contenuto;
+                }
+                for (const dest of op.destinazioni) {
+                    const destVasca = virtualVasche.get(dest.id);
+                    if (destVasca) {
+                        destVasca.volumeCorrente -= dest.quantita;
+                        if(destVasca.volumeCorrente <= 0){
+                           destVasca.volumeCorrente = 0;
+                           destVasca.contenuto = "Vuota";
+                           destVasca.denominazione = "";
+                        }
+                    }
+                }
+            } else if (op.tipo === 'imbottigliamento') {
+                const sourceVasca = virtualVasche.get(op.vascaId);
+                if (sourceVasca) {
+                    sourceVasca.volumeCorrente += op.quantita;
+                    if(sourceVasca.contenuto === 'Vuota') sourceVasca.contenuto = op.contenuto;
+                }
+            } else if (op.tipo === 'lavorazione' && op.tipoLavorazione === 'Aggiunta di liquido') {
+                const vasca = virtualVasche.get(op.vascaId);
+                if (vasca) {
+                    vasca.volumeCorrente -= op.quantitaLavorazione;
+                }
+            }
+
+            const involvedIds = new Set(Array.from(virtualVasche.keys()));
+            for(const tankId of involvedIds){
+                const finalState = virtualVasche.get(tankId);
+                if (vascheData.find(v => v.id === tankId).volumeCorrente !== finalState.volumeCorrente || vascheData.find(v => v.id === tankId).contenuto !== finalState.contenuto) {
+                     batch.update(doc(db, "vasche", tankId), finalState);
+                }
+            }
+            
+            batch.delete(doc(db, "operazioni", op.id));
+            await batch.commit();
+            console.log("Operazione eliminata e volumi ripristinati!");
+            resetOperazioneForms();
+        } catch (error) {
+            console.error("Errore nell'eliminazione dell'operazione e ripristino dei volumi:", error);
+            showError("Si è verificato un errore durante l'eliminazione. Riprova.");
+        }
+    }
+
+    function addAnalisiEventListeners() {
+        document.querySelectorAll('.edit-analisi-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                editingAnalisiId = e.target.dataset.id;
+                const analisiToEdit = analisiData.find(a => a.id === editingAnalisiId);
+                if (analisiToEdit) {
+                    document.getElementById('tab-laboratorio').click();
+                    vascaAnalisiSelect.value = analisiToEdit.vascaId;
+                    document.getElementById('data-analisi').value = analisiToEdit.data;
+                    document.getElementById('note-analisi').value = analisiToEdit.note || '';
+
+                    ethanolAnalisiInput.value = analisiToEdit.parametri.Ethanol || '';
+                    glucfrucAnalisiInput.value = analisiToEdit.parametri.GlucFruc || '';
+                    alctotAnalisiInput.value = analisiToEdit.parametri.AlcTot || '';
+                    atAnalisiInput.value = analisiToEdit.parametri.At || '';
+                    phAnalisiInput.value = analisiToEdit.parametri.pH || '';
+                    avAnalisiInput.value = analisiToEdit.parametri.Av || '';
+                    malicAnalisiInput.value = analisiToEdit.parametri.Malic || '';
+                    lacticAnalisiInput.value = analisiToEdit.parametri.Lactic || '';
+                    densityAnalisiInput.value = analisiToEdit.parametri.Density || '';
+                    fructoseAnalisiInput.value = analisiToEdit.parametri.Fructose || '';
+                    glucoseAnalisiInput.value = analisiToEdit.parametri.Glucose || '';
+                    solforosaLibAnalisiInput.value = analisiToEdit.parametri.SolforosaLib || '';
+                    solforosaTotAnalisiInput.value = analisiToEdit.parametri.SolforosaTot || '';
+
+                    btnCancelAnalisi.classList.remove('hidden');
+                    document.querySelector('#form-analisi button[type="submit"]').textContent = 'Aggiorna Analisi';
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete-analisi-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idToDelete = e.target.dataset.id;
+                showConfirmModal("Sei sicuro di voler eliminare questa analisi?", async () => {
+                    try {
+                        await deleteDoc(doc(db, "analisi", idToDelete));
+                        console.log("Analisi eliminata con successo!");
+                    } catch (error) {
+                        console.error("Errore nell'eliminazione dell'analisi:", error);
+                        showError("Si è verificato un errore durante l'eliminazione. Riprova.");
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.interpret-ai-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const analisiId = e.target.dataset.id;
+                const analisi = analisiData.find(a => a.id === analisiId);
+                const vasca = vascheData.find(v => v.id === analisi.vascaId);
+                if (analisi && vasca) {
+                    const prompt = `Interpreta i seguenti dati di analisi per il vino contenuto nella vasca ${vasca.numero} (Contenuto: ${vasca.contenuto}, Annata: ${vasca.annata}) del ${analisi.data}. Fornisci un parere enologico e suggerisci eventuali azioni correttive. Dati: ${JSON.stringify(analisi.parametri)}`;
+                    handleGeminiRequest(prompt, true);
+                }
+            });
+        });
+    }
+
+    function renderOrdiniLavoroList() {
+        let sortedData = [...ordiniLavoroData];
+        const sortValue = sortOrdiniSelect.value;
+
+        const priorityOrder = { 'Alta': 3, 'Media': 2, 'Bassa': 1 };
+
+        if (sortValue === "data_scadenza_asc") {
+            sortedData.sort((a, b) => (a.dataScadenza || '9999-12-31').localeCompare(b.dataScadenza || '9999-12-31'));
+        } else if (sortValue === "priorita_desc") {
+            sortedData.sort((a, b) => (priorityOrder[b.priorita] || 0) - (priorityOrder[a.priorita] || 0));
+        } else if (sortValue === "stato_asc") {
+            sortedData.sort((a, b) => a.stato.localeCompare(b.stato));
+        }
+
+        if (sortedData.length === 0) {
+            listaOrdini.innerHTML = '<p class="text-center text-gray-500">Nessun ordine di lavoro trovato.</p>';
+            return;
+        }
+
+        const html = sortedData.map(ordine => {
+            const vasca = ordine.vascaId ? vascheData.find(v => v.id === ordine.vascaId) : null;
+            let prioritaClass = '';
+            switch(ordine.priorita) {
+                case 'Alta': prioritaClass = 'bg-red-100 text-red-800'; break;
+                case 'Media': prioritaClass = 'bg-yellow-100 text-yellow-800'; break;
+                case 'Bassa': prioritaClass = 'bg-blue-100 text-blue-800'; break;
+            }
+            let statoClass = '';
+            switch(ordine.stato) {
+                case 'Completato': statoClass = 'bg-green-100 text-green-800'; break;
+                case 'In Corso': statoClass = 'bg-amber-100 text-amber-800'; break;
+                case 'Da Fare': statoClass = 'bg-gray-200 text-gray-800'; break;
+            }
+            
+            let tipologiaClass = 'bg-gray-100 text-gray-800';
+            if (ordine.tipologia) {
+                switch (ordine.tipologia) {
+                    case 'Travaso': tipologiaClass = 'bg-purple-100 text-purple-800'; break;
+                    case 'Imbottigliamento': tipologiaClass = 'bg-green-100 text-green-800'; break;
+                    case 'Lavorazioni': tipologiaClass = 'bg-blue-100 text-blue-800'; break;
+                    case 'Altro': tipologiaClass = 'bg-gray-200 text-gray-800'; break;
+                }
+            }
+
+
+            return `
+            <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-lg">${ordine.titolo}</h4>
+                        <p class="text-sm text-gray-600">${ordine.descrizione || ''}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="btn btn-primary text-sm transform-op-btn" data-id="${ordine.id}">Crea Operazione</button>
+                        <button class="btn btn-secondary text-sm edit-ordine-btn" data-id="${ordine.id}">Modifica</button>
+                        <button class="btn btn-secondary text-sm delete-ordine-btn" data-id="${ordine.id}">Elimina</button>
+                    </div>
+                </div>
+                <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                    ${ordine.tipologia ? `<span class="font-semibold px-2 py-1 rounded-full ${tipologiaClass}">${ordine.tipologia}</span>` : ''}
+                    <span class="font-semibold px-2 py-1 rounded-full ${statoClass}">${ordine.stato}</span>
+                    <span class="font-semibold px-2 py-1 rounded-full ${prioritaClass}">Priorità: ${ordine.priorita}</span>
+                    ${ordine.dataScadenza ? `<span class="text-gray-600">Scadenza: ${ordine.dataScadenza}</span>` : ''}
+                    ${vasca ? `<span class="text-gray-600">Vasca: <strong>${vasca.numero}</strong></span>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+        listaOrdini.innerHTML = html;
+
+        document.querySelectorAll('.edit-ordine-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                editingOrdineId = e.target.dataset.id;
+                const ordine = ordiniLavoroData.find(o => o.id === editingOrdineId);
+                if (ordine) {
+                    document.getElementById('titolo-ordine').value = ordine.titolo;
+                    document.getElementById('tipologia-ordine').value = ordine.tipologia || '';
+                    document.getElementById('vasca-ordine').value = ordine.vascaId || '';
+                    document.getElementById('descrizione-ordine').value = ordine.descrizione;
+                    document.getElementById('data-scadenza-ordine').value = ordine.dataScadenza;
+                    document.getElementById('priorita-ordine').value = ordine.priorita;
+                    document.getElementById('stato-ordine').value = ordine.stato;
+
+                    document.querySelector('#form-ordine-lavoro button[type="submit"]').textContent = 'Aggiorna Ordine';
+                    btnCancelOrdine.classList.remove('hidden');
+                    window.scrollTo(0, 0);
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete-ordine-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const id = e.target.dataset.id;
+                showConfirmModal("Sei sicuro di voler eliminare questo ordine di lavoro?", () => deleteOrdineLavoro(id));
+            });
+        });
+
+        document.querySelectorAll('.transform-op-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const ordineId = e.target.dataset.id;
+                transformaOrdineInOperazione(ordineId);
+            });
+        });
+    }
+
+    async function addVasca(data) {
+        console.log("Function 'addVasca' called.");
+        try {
+            await addDoc(collection(db, "vasche"), data);
+            console.log("Vasca aggiunta con successo!");
+        } catch (error) {
+            console.error("Errore nell'aggiunta della vasca:", error);
+            showError("Si è verificato un errore nell'aggiunta della vasca. Riprova.");
+        }
+    }
+
+    async function updateVasca(id, data) {
+        console.log("Function 'updateVasca' called.");
+        try {
+            const vascaRef = doc(db, "vasche", id);
+            await updateDoc(vascaRef, data);
+            console.log("Vasca aggiornata con successo!");
+        } catch (error) {
+            console.error("Errore nell'aggiornamento della vasca:", error);
+            showError("Si è verificato un errore nell'aggiornamento della vasca. Riprova.");
+        }
+    }
+    
+    async function addOperazione(data) {
+        console.log("Function 'addOperazione' called.");
+        try {
+            await addDoc(collection(db, "operazioni"), data);
+            console.log("Operazione aggiunta con successo!");
+        } catch (error) {
+            console.error("Errore nell'aggiunta dell'operazione:", error);
+            showError("Si è verificato un errore nell'aggiunta dell'operazione. Riprova.");
+        }
+    }
+
+    async function updateOperazione(id, data) {
+        console.log("Function 'updateOperazione' called.");
+        try {
+            const opRef = doc(db, "operazioni", id);
+            await updateDoc(opRef, data);
+            console.log("Operazione aggiornata con successo!");
+        } catch (error) {
+            console.error("Errore nell'aggiornamento dell'operazione:", error);
+            showError("Si è verificato un errore nell'aggiornamento dell'operazione. Riprova.");
+        }
+    }
+    
+    async function addAnalisi(data) {
+        console.log("Function 'addAnalisi' called.");
+        try {
+            await addDoc(collection(db, "analisi"), data);
+            console.log("Analisi aggiunta con successo!");
+        } catch (error) {
+            console.error("Errore nell'aggiunta dell'analisi:", error);
+            showError("Si è verificato un errore nell'aggiunta dell'analisi. Riprova.");
+        }
+    }
+
+    async function updateAnalisi(id, data) {
+        console.log("Function 'updateAnalisi' called.");
+        try {
+            const analisiRef = doc(db, "analisi", id);
+            await updateDoc(analisiRef, data);
+            console.log("Analisi aggiornata con successo!");
+        } catch (error) {
+            console.error("Errore nell'aggiornamento dell'analisi:", error);
+            showError("Si è verificato un errore nell'aggiornamento dell'analisi. Riprova.");
+        }
+    }
+
+    async function addOrdineLavoro(data) {
+        try {
+            await addDoc(collection(db, "ordini_lavoro"), data);
+        } catch (error) {
+            console.error("Errore nell'aggiunta dell'ordine di lavoro:", error);
+            showError("Errore nell'aggiunta dell'ordine di lavoro.");
+        }
+    }
+
+    async function updateOrdineLavoro(id, data) {
+        try {
+            await updateDoc(doc(db, "ordini_lavoro", id), data);
+        } catch (error) {
+            console.error("Errore nell'aggiornamento dell'ordine di lavoro:", error);
+            showError("Errore nell'aggiornamento dell'ordine di lavoro.");
+        }
+    }
+
+    async function deleteOrdineLavoro(id) {
+        try {
+            await deleteDoc(doc(db, "ordini_lavoro", id));
+        } catch (error) {
+            console.error("Errore nell'eliminazione dell'ordine di lavoro:", error);
+            showError("Errore nell'eliminazione dell'ordine di lavoro.");
+        }
+    }
+
+    function parseDate(dateValue) {
+        if (!dateValue) return new Date().toISOString().substring(0, 10);
+        
+        // Handle Excel serial date number
+        if (typeof dateValue === 'number' && dateValue > 1) {
+            // Excel's epoch starts on 1900-01-01, but has a bug where it thinks 1900 is a leap year.
+            // The number 25569 corresponds to 1970-01-01.
+            return new Date(Math.round((dateValue - 25569) * 86400 * 1000)).toISOString().substring(0, 10);
+        }
+
+        // Handle string date
+        if (typeof dateValue === 'string') {
+            // Remove potential quotes and trim whitespace
+            const cleanDateStr = dateValue.replace(/'/g, '').trim();
+            
+            // Attempt to parse with Date constructor, which is quite flexible
+            const parsedDate = new Date(cleanDateStr);
+            
+            // Check if parsing was successful
+            if (!isNaN(parsedDate.getTime())) {
+                // Check if the year is reasonable (e.g., not in the far past or future)
+                const year = parsedDate.getFullYear();
+                if (year > 1900 && year < 2100) {
+                    return parsedDate.toISOString().substring(0, 10);
+                }
+            }
+        }
+        
+        // Fallback for unrecognized formats
+        console.warn(`Could not parse date: "${dateValue}". Using today's date.`);
+        return new Date().toISOString().substring(0, 10);
+    }
+
+    function transformaOrdineInOperazione(ordineId) {
+        const ordine = ordiniLavoroData.find(o => o.id === ordineId);
+        if (!ordine) {
+            showError("Ordine di lavoro non trovato.");
+            return;
+        }
+
+        const vasca = vascheData.find(v => v.id === ordine.vascaId);
+        if (!vasca && ordine.vascaId) {
+            showError("Vasca associata all'ordine non trovata.");
+            return;
+        }
+        
+        const oggi = new Date().toISOString().slice(0, 10);
+
+        switch(ordine.tipologia) {
+            case 'Travaso':
+                document.getElementById('tab-travasi').click();
+                if(vasca) {
+                    vascaOrigineSelect.value = ordine.vascaId;
+                    vascaOrigineSelect.dispatchEvent(new Event('change'));
+                }
+                document.getElementById('note-travaso').value = `Da ordine: ${ordine.titolo} - ${ordine.descrizione || ''}`;
+                document.getElementById('data-travaso').value = oggi;
+                break;
+            case 'Imbottigliamento':
+                document.getElementById('tab-imbottigliamento').click();
+                if(vasca) {
+                    vascaImbottigliamentoOrigineSelect.value = ordine.vascaId;
+                    vascaImbottigliamentoOrigineSelect.dispatchEvent(new Event('change'));
+                    document.getElementById('denominazione-vino').value = vasca.denominazione || vasca.contenuto;
+                }
+                document.getElementById('note-imbottigliamento').value = `Da ordine: ${ordine.titolo} - ${ordine.descrizione || ''}`;
+                document.getElementById('data-imbottigliamento').value = oggi;
+                break;
+            case 'Lavorazioni':
+                document.getElementById('tab-lavorazioni').click();
+                if(vasca) {
+                    vascaLavorazioneSelect.value = ordine.vascaId;
+                    vascaLavorazioneSelect.dispatchEvent(new Event('change'));
+                }
+                document.getElementById('note-lavorazione').value = `Da ordine: ${ordine.titolo} - ${ordine.descrizione || ''}`;
+                document.getElementById('data-lavorazione').value = oggi;
+                break;
+            default:
+                showError("Tipologia di lavoro non supportata per la trasformazione automatica in operazione.");
+                return; 
+        }
+
+        showConfirmModal("Vuoi impostare lo stato di questo ordine a 'In Corso'?", async () => { 
+            await updateOrdineLavoro(ordineId, { ...ordine, stato: 'In Corso' }); 
+        });
+        
+        window.scrollTo(0, 0);
+    }
+
+    function resetForm() {
+        console.log("Function 'resetForm' called.");
+        formVasca.reset();
+        editingVascaId = null;
+        formTitle.textContent = 'Gestione Vasche';
+        btnSubmitText.textContent = 'Salva Vasca';
+        btnCancelEdit.classList.add('hidden');
+    }
+
+    function resetOperazioneForms() {
+        console.log("Function 'resetOperazioneForms' called.");
+        formTravaso.reset();
+        formLavorazione.reset();
+        formImbottigliamento.reset();
+        editingOperazioneId = null;
+        originalOpData = null;
+        
+        // Reset dynamic content and fields
+        volumeVascaTravasiDisplay.textContent = '';
+        volumeVascaImbottigliamentoDisplay.textContent = '';
+        volumeVascaLavorazioniDisplay.textContent = '';
+        contenutoLavorazioneAttualeInput.value = '';
+        coloreLavorazioneAttualeSelect.value = '';
+        quantitaLavorazioneDiv.classList.add('hidden');
+        quantitaLavorazioneInput.required = false;
+
+        // Reset destination inputs for travaso vino
+        const destinazioniInputs = destinazioneContainer.querySelectorAll('input');
+        destinazioniInputs.forEach(input => input.value = '');
+    }
+
+    function resetAnalisiForm() {
+        console.log("Function 'resetAnalisiForm' called.");
+        formAnalisi.reset();
+        editingAnalisiId = null;
+        btnCancelAnalisi.classList.add('hidden');
+        document.querySelector('#form-analisi button[type="submit"]').textContent = 'Salva Analisi';
+    }
+
+    function resetOrdineForm() {
+        formOrdineLavoro.reset();
+        document.getElementById('priorita-ordine').value = 'Media'; // Reset to default
+        document.getElementById('stato-ordine').value = 'Da Fare'; // Reset to default
+        editingOrdineId = null;
+        document.querySelector('#form-ordine-lavoro button[type="submit"]').textContent = 'Salva Ordine';
+        btnCancelOrdine.classList.add('hidden');
+    }
+
+    async function resetOperazioni() {
+        console.log("Function 'resetOperazioni' called.");
+        try {
+            const q = query(collection(db, "operazioni"));
+            const querySnapshot = await getDocs(q);
+            const batch = writeBatch(db);
+            querySnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            showError("Tutti i dati delle operazioni sono stati resettati.", "Successo");
+            updateRiepilogo();
+            renderTravasiList();
+            renderLavorazioniList();
+            renderImbottigliamentoList();
+            updateRiepilogoMassa();
+        } catch (error) {
+            console.error("Errore durante il reset dei dati:", error);
+            showError("Si è verificato un errore durante il reset dei dati. Riprova.");
+        }
+    }
+
+    // Funzioni Assistente AI
+    async function handleGeminiRequest(userPrompt, showInModal = false) {
+        if (!userPrompt.trim()) return;
+
+        if (!showInModal) {
+            appendMessage(userPrompt, 'user');
+            chatInput.value = '';
+            aiLoading.classList.remove('hidden');
+        } else {
+            showError("Sto elaborando la tua richiesta...", "Assistente AI");
+        }
+
+        const systemPrompt = `Sei un enologo esperto e assistente di cantina. Analizza i dati forniti in formato JSON che rappresentano lo stato completo della cantina (vasche, operazioni, analisi). Rispondi alla domanda dell'utente in modo conciso, professionale e pratico, fornendo consigli basati sui dati. I dati includono: \`vascheData\`, \`operazioniData\`, \`analisiData\`. Rispondi in italiano.`;
+        
+        const fullUserQuery = `
+            Dati della cantina:
+            - Vasche: ${JSON.stringify(vascheData)}
+            - Operazioni: ${JSON.stringify(operazioniData)}
+            - Analisi: ${JSON.stringify(analisiData)}
+            
+            Domanda dell'utente: "${userPrompt}"
+        `;
+
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: fullUserQuery }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (text) {
+                if (!showInModal) {
+                    appendMessage(text, 'ai');
+                } else {
+                    showReportModal(text, "Report Assistente AI");
+                }
+            } else {
+                throw new Error("Nessuna risposta valida dal modello AI.");
+            }
+
+        } catch (error) {
+            console.error("Errore chiamata Gemini:", error);
+            const errorMessageText = "Spiacente, non sono riuscito a elaborare la richiesta. Riprova più tardi.";
+            if (!showInModal) {
+                appendMessage(errorMessageText, 'ai');
+            } else {
+                showError(errorMessageText, "Errore AI");
+            }
+        } finally {
+            if (!showInModal) {
+                aiLoading.classList.add('hidden');
+            }
+        }
+    }
+
+    function appendMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('chat-message', sender === 'user' ? 'user-message' : 'ai-message');
+        messageDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+        chatWindow.appendChild(messageDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    reportCloseBtn.addEventListener('click', () => {
+        reportModal.classList.add('hidden');
+    });
+}
+
+</script>
+</html>
+
