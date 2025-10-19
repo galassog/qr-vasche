@@ -912,6 +912,10 @@
     
     // Define all variables that will be used in both modes
     let app, auth, db, userId;
+
+    // --- CONFIGURAZIONE FIREBASE ---
+    // Inserita la configurazione specifica del tuo progetto per risolvere
+    // definitivamente l'errore "Vasca non trovata".
     const firebaseConfig = {
       apiKey: "AIzaSyAgPAeanvZSvMk6TaQgjHga26JjQcgX-o4",
       authDomain: "gestione-vasche.firebaseapp.com",
@@ -933,7 +937,7 @@
     }
     db = getFirestore(app);
     auth = getAuth(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestione-vasche'; // Use your project ID as fallback
+    const appId = 'gestione-vasche'; // Hardcoded project ID for consistency
 
     function showError(message, title = "Errore") {
         console.log("Function 'showError' called.");
@@ -967,14 +971,11 @@
             console.log("Autenticazione completata. Utente:", user.uid);
             detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
             
-            // Passo 2: Recuperare i dati usando il percorso pubblico corretto
-            const vascaPath = `artifacts/${appId}/public/data/vasche/${vascaId}`;
-            const analisiPath = `artifacts/${appId}/public/data/analisi`;
-
-            const vascaRef = doc(db, vascaPath);
-            const analisiQuery = query(collection(db, analisiPath), where("vascaId", "==", vascaId));
+            // Passo 2: Recuperare i dati usando il percorso di root per i dati esistenti
+            const vascaRef = doc(db, "vasche", vascaId);
+            const analisiQuery = query(collection(db, "analisi"), where("vascaId", "==", vascaId));
             
-            console.log(`Recupero dati per vasca da: ${vascaPath}`);
+            console.log(`Recupero dati per vasca da: ${vascaRef.path}`);
             const [vascaDoc, analisiSnapshot] = await Promise.all([
                 getDoc(vascaRef),
                 getDocs(analisiQuery)
@@ -998,11 +999,9 @@
         } catch (error) {
             console.error("ERRORE DETTAGLIATO in initDetailView:", error);
             let userMessage = "Impossibile caricare i dettagli. Riprova più tardi.";
-            
             if (error.code) {
                  userMessage += `\n\n(Codice Errore: ${error.code})`;
             }
-
             if (error.code === 'auth/unauthorized-domain') {
                 userMessage = "Errore Dominio Non Autorizzato:\nIl dominio da cui stai accedendo non è autorizzato. Aggiungi '" + window.location.hostname + "' alla lista dei domini autorizzati nelle impostazioni di Autenticazione del tuo progetto Firebase.";
             } else if (error.code === 'permission-denied') {
@@ -1105,9 +1104,7 @@
     let pendingConfirmAction = null;
 
     // !! IMPORTANTE !!
-    // Per far funzionare i QR Code, carica questo file su un servizio di hosting 
-    // (es. GitHub Pages, Netlify, Vercel) e sostituisci il placeholder qui sotto con il tuo URL pubblico.
-    const publicBaseUrl = 'https://galassog.github.io/qr-vasche/index.html'; // Es: https://tuo-utente.github.io/cantina/index.html
+    const publicBaseUrl = 'https://galassog.github.io/qr-vasche/index.html';
 
     const authModal = document.getElementById('auth-modal');
     const appContainer = document.getElementById('app-container');
@@ -1312,11 +1309,13 @@
     });
 
     function getCollectionRef(collectionName) {
-        return collection(db, `artifacts/${appId}/public/data/${collectionName}`);
+        // Ripristinato per puntare alla root collection per leggere i dati esistenti.
+        return collection(db, collectionName);
     }
 
     function getDocRef(collectionName, docId) {
-        return doc(db, `artifacts/${appId}/public/data/${collectionName}/${docId}`);
+        // Ripristinato per puntare alla root collection per leggere i dati esistenti.
+        return doc(db, collectionName, docId);
     }
 
     function setupRealtimeListeners() {
@@ -3295,7 +3294,7 @@
         } catch (error) {
             console.error("Errore chiamata Gemini:", error);
             const errorMessageText = "Spiacente, non sono riuscito a elaborare la richiesta. Riprova più tardi.";
-            if (!showInmodal) {
+            if (!showInModal) {
                 appendMessage(errorMessageText, 'ai');
             } else {
                 showError(errorMessageText, "Errore AI");
@@ -3322,4 +3321,3 @@
 
 </script>
 </html>
-
