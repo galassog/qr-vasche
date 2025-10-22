@@ -251,6 +251,7 @@
             <button id="tab-riepilogo" class="tab-btn -mb-px flex-shrink-0">Riepilogo</button>
             <button id="tab-cantina" class="tab-btn -mb-px flex-shrink-0">Cantina</button>
             <button id="tab-assistente" class="tab-btn -mb-px flex-shrink-0">Assistente AI</button>
+            <button id="tab-qrcodes" class="tab-btn -mb-px flex-shrink-0">Tutti i QR</button>
         </div>
 
         <!-- Vasche Section -->
@@ -837,6 +838,15 @@
                 <button id="btn-report-settimanale" class="btn btn-secondary">Genera Report Settimanale</button>
             </div>
         </div>
+
+        <!-- Tutti i QR Section -->
+        <div id="content-qrcodes" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold mb-4">Tutti i QR Code delle Vasche</h2>
+            <p class="text-gray-600 mb-6">Questa pagina è ottimizzata per la stampa. Puoi usare la funzione di stampa del browser (Ctrl+P o Cmd+P) per avere un riferimento rapido di tutti i QR code.</p>
+            <div id="all-qrcodes-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
+                <p class="col-span-full text-center text-gray-500">Caricamento QR code...</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -939,6 +949,10 @@
     auth = getAuth(app);
     const appId = 'gestione-vasche'; // Hardcoded project ID for consistency
 
+    // --- CONFIGURAZIONE PASSWORD QR CODE (Semplice, NON SICURA!) ---
+    // Cambia questa password con una tua. Ricorda che è visibile nel codice sorgente.
+    const qrCodePassword = "san"; 
+
     function showError(message, title = "Errore") {
         console.log("Function 'showError' called.");
         const errorTitle = document.getElementById('error-title');
@@ -954,6 +968,15 @@
     async function initDetailView(vascaId) {
         const detailViewContainer = document.getElementById('detail-view-container');
         detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Autenticazione in corso...</p>';
+
+        // --- Richiesta Password ---
+        const enteredPassword = prompt("Inserisci la password per visualizzare i dettagli:");
+        if (enteredPassword !== qrCodePassword) {
+            detailViewContainer.innerHTML = '<p class="text-center text-red-500 text-lg">Password errata. Accesso negato.</p>';
+            showError("Password errata. Impossibile visualizzare i dettagli.");
+            return; // Interrompe l'esecuzione se la password è sbagliata
+        }
+        // --- Fine Richiesta Password ---
 
         try {
             // Passo 1: Attendere che l'autenticazione sia pronta.
@@ -1235,10 +1258,14 @@
     }
 
     // Check for saved email on page load
-    const savedEmail = localStorage.getItem('savedEmail');
-    if (savedEmail) {
-        authEmailInput.value = savedEmail;
-        rememberMeCheckbox.checked = true;
+    try {
+        const savedEmail = localStorage.getItem('savedEmail');
+        if (savedEmail) {
+            authEmailInput.value = savedEmail;
+            rememberMeCheckbox.checked = true;
+        }
+    } catch (e) {
+        console.warn('localStorage is not accessible in this environment. "Remember me" feature is disabled.', e);
     }
 
     // Auth Handlers
@@ -1247,10 +1274,14 @@
         const email = authEmailInput.value;
         const password = authPasswordInput.value;
 
-        if (rememberMeCheckbox.checked) {
-            localStorage.setItem('savedEmail', email);
-        } else {
-            localStorage.removeItem('savedEmail');
+        try {
+            if (rememberMeCheckbox.checked) {
+                localStorage.setItem('savedEmail', email);
+            } else {
+                localStorage.removeItem('savedEmail');
+            }
+        } catch (e) {
+             console.warn('localStorage is not accessible. Could not save email.', e);
         }
 
         try {
@@ -1266,10 +1297,14 @@
         const email = authEmailInput.value;
         const password = authPasswordInput.value;
 
-        if (rememberMeCheckbox.checked) {
-            localStorage.setItem('savedEmail', email);
-        } else {
-            localStorage.removeItem('savedEmail');
+        try {
+            if (rememberMeCheckbox.checked) {
+                localStorage.setItem('savedEmail', email);
+            } else {
+                localStorage.removeItem('savedEmail');
+            }
+        } catch (e) {
+            console.warn('localStorage is not accessible. Could not save email.', e);
         }
 
         try {
@@ -1843,10 +1878,19 @@
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
                 tabContents.forEach(c => c.classList.add('hidden'));
+                
                 tab.classList.add('active');
-                const contentId = `content-${tab.id.split('-')[1]}`;
+                const tabName = tab.id.split('-')[1];
+                const contentId = `content-${tabName}`;
+                
+                if (tabName === 'qrcodes') {
+                    renderAllQrCodes();
+                }
+                
                 const contentDiv = document.getElementById(contentId);
-                contentDiv.classList.remove('hidden');
+                if (contentDiv) {
+                    contentDiv.classList.remove('hidden');
+                }
             });
         });
         
@@ -2326,6 +2370,52 @@
                 selectRiepilogoVasca.value = vascaId;
                 updateRiepilogo();
             });
+        });
+    }
+
+    function renderAllQrCodes() {
+        console.log("Function 'renderAllQrCodes' called.");
+        const container = document.getElementById('all-qrcodes-container');
+        container.innerHTML = ''; // Clear previous content
+
+        if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
+            container.innerHTML = `<div class="col-span-full text-center p-6 bg-amber-50 rounded-md border border-amber-200">
+                <h3 class="font-bold text-red-700">Azione richiesta: URL Pubblico non configurato</h3>
+                <p class="mt-2 text-gray-700">Per generare i link scansionabili, carica prima questo file online e poi modifica la costante 'publicBaseUrl' nel codice con il tuo URL pubblico. Al momento, i QR code conterranno solo il nome della vasca come testo.</p>
+            </div>`;
+        }
+
+        const sortedVasche = [...vascheData].sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
+
+        sortedVasche.forEach(vasca => {
+            let url;
+            if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
+                url = `Vasca: ${vasca.numero}\nContenuto: ${vasca.contenuto}`;
+            } else {
+                url = publicBaseUrl.split('?')[0] + `?view=vasca&id=${vasca.id}`;
+            }
+
+            try {
+                const qr = qrcode(0, 'L');
+                qr.addData(url);
+                qr.make();
+                const imgTag = qr.createImgTag(4, 4); // (cellSize, margin)
+
+                const qrCodeDiv = document.createElement('div');
+                qrCodeDiv.className = 'flex flex-col items-center text-center p-4 border rounded-lg bg-white shadow-sm';
+                qrCodeDiv.innerHTML = `
+                    ${imgTag}
+                    <p class="mt-2 font-bold text-lg text-gray-800">${vasca.numero}</p>
+                    <p class="text-xs text-gray-500">${vasca.contenuto}</p>
+                `;
+                container.appendChild(qrCodeDiv);
+            } catch (e) {
+                console.error(`Errore generazione QR Code per vasca ${vasca.numero}:`, e);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-center text-red-500';
+                errorDiv.innerHTML = `<p class="font-bold">${vasca.numero}</p><p class="text-xs">Errore QR</p>`;
+                container.appendChild(errorDiv);
+            }
         });
     }
 
