@@ -2029,8 +2029,8 @@
                     const headerMap = {
                         'vasca': 'vasca', 'numero vasca': 'vasca',
                         'date': 'data', 'data': 'data', 'data analisi': 'data',
-                        'solforosa lib': 'solforosa lib', 'solforosa libera': 'solforosa lib', 'so2 lib': 'solforosa lib', 'so2 libera': 'solforosa lib',
-                        'solforosa tot': 'solforosa tot', 'solforosa totale': 'solforosa tot', 'so2 tot': 'solforosa tot', 'so2 totale': 'solforosa tot',
+                        'solforosa lib': 'solforosa lib', 'solforosa libera': 'solforosa lib', 'so2 lib': 'solforosa lib', 'so2 libera': 'solforosa lib', 'rval': 'solforosa lib',
+                        'solforosa tot': 'solforosa tot', 'solforosa totale': 'solforosa tot', 'so2 tot': 'solforosa tot', 'so2 totale': 'solforosa tot', 'rval2': 'solforosa tot',
                         'ph': 'ph',
                         'at': 'at', 'acidità totale': 'at', 'total acid': 'at',
                         'av': 'av', 'acidità volatile': 'av', 'va': 'av',
@@ -2278,8 +2278,8 @@
             qrInfoPara.innerHTML = `<strong class='text-red-700'>Azione richiesta:</strong><br>Per generare un link scansionabile, carica prima questo file online e poi modifica la costante 'publicBaseUrl' nel codice con il tuo URL pubblico.`;
             qrInfoPara.className = 'text-sm text-left bg-amber-50 p-3 rounded-md border border-amber-200';
         } else {
-            // Se l'URL è configurato, crea il link completo.
-            url = publicBaseUrl.split('?')[0] + `?view=vasca&id=${vascaId}`;
+            // URL fisso per la vasca, senza timestamp per cache busting
+            url = publicBaseUrl.split('?')[0] + `?view=vasca&id=${vascaId}`; 
             qrInfoPara.textContent = 'Scansiona questo codice con il tuo cellulare per visualizzare i dettagli della vasca.';
             qrInfoPara.className = 'text-sm text-gray-600 mb-4'; // Reset styles
         }
@@ -2378,20 +2378,29 @@
         const container = document.getElementById('all-qrcodes-container');
         container.innerHTML = ''; // Clear previous content
 
-        if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
+        if (vascheData.length === 0) {
+            container.innerHTML = '<p class="col-span-full text-center text-gray-500">Nessuna vasca trovata.</p>';
+            return;
+        }
+        
+        // Messaggio di avviso per l'URL pubblico spostato qui per visibilità
+         if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
             container.innerHTML = `<div class="col-span-full text-center p-6 bg-amber-50 rounded-md border border-amber-200">
                 <h3 class="font-bold text-red-700">Azione richiesta: URL Pubblico non configurato</h3>
                 <p class="mt-2 text-gray-700">Per generare i link scansionabili, carica prima questo file online e poi modifica la costante 'publicBaseUrl' nel codice con il tuo URL pubblico. Al momento, i QR code conterranno solo il nome della vasca come testo.</p>
             </div>`;
         }
 
+
         const sortedVasche = [...vascheData].sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
 
         sortedVasche.forEach(vasca => {
             let url;
+            // Genera SEMPRE il QR code, anche se l'URL non è impostato, usando il testo come fallback
             if (publicBaseUrl === 'REPLACE_WITH_YOUR_PUBLIC_URL' || !publicBaseUrl) {
                 url = `Vasca: ${vasca.numero}\nContenuto: ${vasca.contenuto}`;
             } else {
+                 // URL fisso per la vasca, senza timestamp per cache busting
                 url = publicBaseUrl.split('?')[0] + `?view=vasca&id=${vasca.id}`;
             }
 
@@ -3411,3 +3420,4 @@
 
 </script>
 </html>
+
