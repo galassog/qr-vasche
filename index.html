@@ -212,25 +212,9 @@
 <div id="app-container" class="container hidden">
     <div class="flex justify-between items-center mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-100 to-amber-200 shadow-md">
         <div class="flex items-center space-x-4">
-             <!-- Logo SVG Inserito Direttamente -->
+             <!-- Logo ripristinato al segnaposto iniziale, link rimosso -->
             <div class="p-1 bg-white rounded-full shadow-md flex items-center justify-center">
-                <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <path id="textPath" d="M 10,50 A 40,40 0 1 1 90,50 A 40,40 0 1 1 10,50" fill="none" />
-                    </defs>
-                    <circle cx="50" cy="50" r="48" fill="#002080" stroke="#bca34d" stroke-width="1"/>
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="2" stroke-dasharray="2 2"/>
-                    
-                    <path d="M50 25 L55 45 L75 50 L55 55 L50 75 L45 55 L25 50 L45 45 Z" fill="#bca34d" />
-                    <path d="M28 30 L31 38 L39 41 L31 44 L28 52 L25 44 L17 41 L25 38 Z" fill="#bca34d" />
-                    <path d="M72 18 L75 26 L83 29 L75 32 L72 40 L69 32 L61 29 L69 26 Z" fill="#bca34d" />
-                    <line x1="60" y1="20" x2="40" y2="40" stroke="#bca34d" stroke-width="2" />
-
-                    <text font-family="Inter, sans-serif" font-size="12" fill="white" font-weight="bold">
-                        <textPath href="#textPath" startOffset="0%">SAN</textPath>
-                        <textPath href="#textPath" startOffset="50%">LORENZO</textPath>
-                    </text>
-                </svg>
+                <img src="https://placehold.co/80x80/283593/FFD700?text=SL" alt="Logo San Lorenzo" class="w-20 h-20 rounded-full" style="width: 80px; height: 80px;">
             </div>
             <h1 class="text-4xl font-bold text-red-900">Cantina on Line</h1>
         </div>
@@ -676,12 +660,13 @@
             </form>
 
             <div class="mt-8">
-                <h3 class="text-xl font-semibold mb-4">Importa da Excel</h3>
+                <h3 class="text-xl font-semibold mb-4">Importa da File</h3>
                 <div class="flex items-center space-x-4">
-                    <input type="file" id="import-excel-file" class="form-input w-auto" accept=".xlsx, .xls">
+                    <!-- Modifica: Aggiunto .csv e testo di aiuto aggiornato -->
+                    <input type="file" id="import-excel-file" class="form-input w-auto" accept=".xlsx, .xls, .csv">
                     <button id="btn-import-excel" class="btn btn-primary whitespace-nowrap">Importa Analisi</button>
                 </div>
-                <p class="text-sm mt-2 text-gray-600">Il file Excel deve avere le colonne: "Vasca", "Data", "pH", "Acidità Totale", etc.</p>
+                <p class="text-sm mt-2 text-gray-600">File Excel (.xls, .xlsx) o CSV. Colonne: "Vasca", "Data", "pH", "At", etc.</p>
             </div>
 
             <h3 class="text-xl font-semibold mt-8 mb-4">Elenco Analisi Recenti</h3>
@@ -893,6 +878,23 @@
     </div>
 </div>
 
+<!-- INIZIO Correzione Stabilità: Aggiunto modal per password QR -->
+<div id="qr-password-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+        <h3 class="text-xl font-bold mb-4 text-red-800">Accesso Protetto</h3>
+        <p class="text-gray-700 mb-4">Inserisci la password per visualizzare i dettagli della vasca.</p>
+        <form id="qr-password-form">
+            <input type="password" id="qr-password-input" class="form-input text-center" placeholder="Password">
+            <p id="qr-password-error" class="text-sm text-red-500 hidden mt-2">Password errata.</p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <button type="button" id="qr-password-cancel" class="btn btn-secondary">Annulla</button>
+                <button type="submit" id="qr-password-submit" class="btn btn-primary">Conferma</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- FINE Correzione Stabilità -->
+
 
 <!-- Excel Import Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -965,87 +967,115 @@
         errorModal.classList.remove('hidden');
     }
 
+    // --- INIZIO Correzione Stabilità: Sostituito prompt() con Modal ---
     async function initDetailView(vascaId) {
         const detailViewContainer = document.getElementById('detail-view-container');
-        detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Autenticazione in corso...</p>';
+        const passwordModal = document.getElementById('qr-password-modal');
+        const passwordForm = document.getElementById('qr-password-form');
+        const passwordInput = document.getElementById('qr-password-input');
+        const passwordError = document.getElementById('qr-password-error');
+        const passwordCancel = document.getElementById('qr-password-cancel');
+        
+        // Mostra il modal della password
+        passwordModal.classList.remove('hidden');
 
-        // --- Richiesta Password ---
-        const enteredPassword = prompt("Inserisci la password per visualizzare i dettagli:");
-        if (enteredPassword !== qrCodePassword) {
-            detailViewContainer.innerHTML = '<p class="text-center text-red-500 text-lg">Password errata. Accesso negato.</p>';
-            showError("Password errata. Impossibile visualizzare i dettagli.");
-            return; // Interrompe l'esecuzione se la password è sbagliata
-        }
-        // --- Fine Richiesta Password ---
+        // Gestore per il pulsante Annulla
+        passwordCancel.onclick = () => {
+            passwordModal.classList.add('hidden');
+            detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Accesso annullato.</p>';
+        };
 
-        try {
-            // Passo 1: Attendere che l'autenticazione sia pronta.
-            const user = await new Promise((resolve, reject) => {
-                const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    unsubscribe();
-                    if (user) {
-                        resolve(user);
-                    } else {
-                        signInAnonymously(auth).then(userCredential => resolve(userCredential.user)).catch(reject);
-                    }
-                }, reject);
-            });
-
-            console.log("Autenticazione completata. Utente:", user.uid);
-            detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
+        // Gestore per l'invio della password
+        passwordForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const enteredPassword = passwordInput.value;
             
-            // Passo 2: Recuperare i dati usando il percorso di root per i dati esistenti
-            const vascaRef = doc(db, "vasche", vascaId);
-            const analisiQuery = query(collection(db, "analisi"), where("vascaId", "==", vascaId));
-            
-            console.log(`Recupero dati per vasca da: ${vascaRef.path}`);
-            const [vascaDoc, analisiSnapshot] = await Promise.all([
-                getDoc(vascaRef),
-                getDocs(analisiQuery)
-            ]);
-            console.log("Lettura dati dal database completata.");
-
-            if (!vascaDoc.exists()) {
-                 detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg">Errore: Vasca con ID ${vascaId} non trovata.</p>`;
-                 return;
+            if (enteredPassword !== qrCodePassword) {
+                passwordError.classList.remove('hidden');
+                return;
             }
 
-            const vascaData = { id: vascaDoc.id, ...vascaDoc.data() };
-            const analisiData = [];
-            analisiSnapshot.forEach((doc) => {
-                analisiData.push({ id: doc.id, ...doc.data() });
-            });
-            analisiData.sort((a, b) => new Date(b.data) - new Date(a.data));
+            // Password corretta, nascondi il modal e procedi
+            passwordError.classList.add('hidden');
+            passwordModal.classList.add('hidden');
+            detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Autenticazione in corso...</p>';
 
-            renderDetailView(vascaData, analisiData);
+            // --- Tutta la logica originale di initDetailView spostata qui ---
+            try {
+                // Passo 1: Attendere che l'autenticazione sia pronta.
+                const user = await new Promise((resolve, reject) => {
+                    const unsubscribe = onAuthStateChanged(auth, (user) => {
+                        unsubscribe();
+                        if (user) {
+                            resolve(user);
+                        } else {
+                            signInAnonymously(auth).then(userCredential => resolve(userCredential.user)).catch(reject);
+                        }
+                    }, reject);
+                });
 
-        } catch (error) {
-            console.error("ERRORE DETTAGLIATO in initDetailView:", error);
-            let userMessage = "Impossibile caricare i dettagli. Riprova più tardi.";
-            if (error.code) {
-                 userMessage += `\n\n(Codice Errore: ${error.code})`;
+                console.log("Autenticazione completata. Utente:", user.uid);
+                detailViewContainer.innerHTML = '<p class="text-center text-gray-500 text-lg">Caricamento dettagli vasca...</p>';
+                
+                // Passo 2: Recuperare i dati
+                const vascaRef = doc(db, "vasche", vascaId);
+                const analisiQuery = query(collection(db, "analisi"), where("vascaId", "==", vascaId));
+                
+                console.log(`Recupero dati per vasca da: ${vascaRef.path}`);
+                const [vascaDoc, analisiSnapshot] = await Promise.all([
+                    getDoc(vascaRef),
+                    getDocs(analisiQuery)
+                ]);
+                console.log("Lettura dati dal database completata.");
+
+                if (!vascaDoc.exists()) {
+                     detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg">Errore: Vasca con ID ${vascaId} non trovata.</p>`;
+                     return;
+                }
+
+                const vascaData = { id: vascaDoc.id, ...vascaDoc.data() };
+                const analisiData = [];
+                analisiSnapshot.forEach((doc) => {
+                    analisiData.push({ id: doc.id, ...doc.data() });
+                });
+                analisiData.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+                renderDetailView(vascaData, analisiData);
+
+            } catch (error) {
+                console.error("ERRORE DETTAGLIATO in initDetailView:", error);
+                let userMessage = "Impossibile caricare i dettagli. Riprova più tardi.";
+                if (error.code) {
+                     userMessage += `\n\n(Codice Errore: ${error.code})`;
+                }
+                if (error.code === 'auth/unauthorized-domain') {
+                    userMessage = "Errore Dominio Non Autorizzato:\nIl dominio da cui stai accedendo non è autorizzato. Aggiungi '" + window.location.hostname + "' alla lista dei domini autorizzati nelle impostazioni di Autenticazione del tuo progetto Firebase.";
+                } else if (error.code === 'permission-denied') {
+                    userMessage = "Impossibile caricare i dettagli: Permesso Negato (permission-denied).\n\nQuesto errore conferma che le Regole di Sicurezza del database Firestore stanno bloccando l'accesso. Per favore, controlla e aggiorna le regole come indicato.";
+                }
+                detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg whitespace-pre-wrap">${userMessage}</p>`;
             }
-            if (error.code === 'auth/unauthorized-domain') {
-                userMessage = "Errore Dominio Non Autorizzato:\nIl dominio da cui stai accedendo non è autorizzato. Aggiungi '" + window.location.hostname + "' alla lista dei domini autorizzati nelle impostazioni di Autenticazione del tuo progetto Firebase.";
-            } else if (error.code === 'permission-denied') {
-                userMessage = "Impossibile caricare i dettagli: Permesso Negato (permission-denied).\n\nQuesto errore conferma che le Regole di Sicurezza del database Firestore stanno bloccando l'accesso. Per favore, controlla e aggiorna le regole come indicato.";
-            }
-            detailViewContainer.innerHTML = `<p class="text-center text-red-500 text-lg whitespace-pre-wrap">${userMessage}</p>`;
-        }
+            // --- Fine della logica originale ---
+        };
     }
+    // --- FINE Correzione Stabilità ---
+
 
     function renderDetailView(vasca, analyses) {
         const detailViewContainer = document.getElementById('detail-view-container');
         const fillPercentage = vasca.capacita > 0 ? (vasca.volumeCorrente / vasca.capacita) * 100 : 0;
         let fillClass = 'bg-gray-400';
-        if (vasca.volumeCorrente > 0) {
+        if (vasca.volumeCorrente > 0 && vasca.colore) { // Modifica: Aggiunto controllo per vasca.colore
             switch (String(vasca.colore).toLowerCase()) {
                 case 'rosso': fillClass = 'bg-red-800'; break;
                 case 'bianco': fillClass = 'bg-yellow-300'; break;
                 case 'rosato': fillClass = 'bg-pink-400'; break;
                 default: fillClass = 'bg-gray-500'; break;
             }
+        } else if (vasca.volumeCorrente <= 0) { // Modifica: Reso trasparente se vuota
+            fillClass = 'bg-transparent';
         }
+
 
         let analysesHtml = '<h3 class="text-xl font-semibold mt-6 mb-3 text-red-800 border-b pb-2">Storico Analisi</h3>';
         if (analyses.length > 0) {
@@ -1072,12 +1102,7 @@
             <div class="max-w-2xl mx-auto p-4 sm:p-6">
                  <div class="flex items-center space-x-4 mb-6">
                     <div class="p-1 bg-white rounded-full shadow-md flex items-center justify-center">
-                        <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <defs><path id="textPath" d="M 10,50 A 40,40 0 1 1 90,50 A 40,40 0 1 1 10,50" fill="none" /></defs>
-                            <circle cx="50" cy="50" r="48" fill="#002080" stroke="#bca34d" stroke-width="1"/><circle cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="2" stroke-dasharray="2 2"/>
-                            <path d="M50 25 L55 45 L75 50 L55 55 L50 75 L45 55 L25 50 L45 45 Z" fill="#bca34d" /><path d="M28 30 L31 38 L39 41 L31 44 L28 52 L25 44 L17 41 L25 38 Z" fill="#bca34d" /><path d="M72 18 L75 26 L83 29 L75 32 L72 40 L69 32 L61 29 L69 26 Z" fill="#bca34d" /><line x1="60" y1="20" x2="40" y2="40" stroke="#bca34d" stroke-width="2" />
-                            <text font-family="Inter, sans-serif" font-size="12" fill="white" font-weight="bold"><textPath href="#textPath" startOffset="0%">SAN</textPath><textPath href="#textPath" startOffset="50%">LORENZO</textPath></text>
-                        </svg>
+                        <img src="https://placehold.co/60x60/283593/FFD700?text=SL" alt="Logo San Lorenzo" class="w-16 h-16 rounded-full" style="width: 60px; height: 60px;">
                     </div>
                     <h1 class="text-3xl font-bold text-red-900">Dettaglio Vasca ${vasca.numero}</h1>
                  </div>
@@ -1087,7 +1112,7 @@
                         <div class="sm:col-span-1 flex flex-col items-center justify-center">
                             <div class="relative w-24 h-32 border-2 border-gray-400 rounded-lg flex items-end overflow-hidden">
                                 <div class="absolute inset-0 bg-white"></div>
-                                <div class="w-full ${fillClass}" style="height: ${fillPercentage}%;"></div>
+                                <div class="w-full ${fillClass}" style="height: ${fillPercentage > 100 ? 100 : fillPercentage}%;"></div> <!-- Correzione altezza > 100% -->
                             </div>
                             <div class="text-center mt-2">
                                  <p class="font-bold text-lg">${(vasca.volumeCorrente / 100).toFixed(2)} hL</p>
@@ -1461,7 +1486,21 @@
                 return;
             }
     
-            const data = { numero, capacita, tipo, colore, volumeCorrente: volumeIniziale, contenuto, denominazione, annata, note, dataCreazione };
+            let data = { numero, capacita, tipo, volumeCorrente: volumeIniziale, note, dataCreazione };
+
+            // Se il volume iniziale è > 0, salva gli altri dati, altrimenti imposta a vuoto
+            if (volumeIniziale > 0) {
+                data.contenuto = contenuto;
+                data.denominazione = denominazione;
+                data.annata = annata;
+                data.colore = colore;
+            } else {
+                data.volumeCorrente = 0; // Assicura che sia 0
+                data.contenuto = "Vuota";
+                data.denominazione = "";
+                data.annata = "";
+                data.colore = "";
+            }
     
             if (editingVascaId) {
                 await updateVasca(editingVascaId, data);
@@ -1487,9 +1526,9 @@
                 document.getElementById('tipo-vasca').value = existingVasca.tipo;
                 document.getElementById('colore-vasca').value = existingVasca.colore || '';
                 document.getElementById('volume-iniziale-vasca').value = (existingVasca.volumeCorrente / 100);
-                document.getElementById('contenuto-vasca').value = existingVasca.contenuto;
+                document.getElementById('contenuto-vasca').value = existingVasca.contenuto === 'Vuota' ? '' : existingVasca.contenuto;
                 document.getElementById('denominazione-vasca').value = existingVasca.denominazione || '';
-                document.getElementById('annata-vasca').value = existingVasca.annata;
+                document.getElementById('annata-vasca').value = existingVasca.annata || '';
                 document.getElementById('data-creazione-vasca').value = existingVasca.dataCreazione || '';
                 document.getElementById('note-vasca').value = existingVasca.note || '';
             }
@@ -1499,6 +1538,7 @@
             const vasca = vascheData.find(v => v.id === vascaOrigineSelect.value);
             if (vasca) {
                 volumeVascaTravasiDisplay.textContent = `Volume corrente: ${vasca.volumeCorrente} L (${(vasca.volumeCorrente / 100).toFixed(2)} hL)`;
+                document.getElementById('denominazione-travaso').value = vasca.denominazione || ''; // Precompila denominazione
                 document.getElementById('annata-travaso').value = vasca.annata || '';
                 document.getElementById('colore-travaso').value = vasca.colore || '';
             } else {
@@ -1568,18 +1608,20 @@
                     const oldSource = virtualVasche.get(originalOpData.vascaId);
                     if (oldSource) {
                         oldSource.volumeCorrente += originalOpData.quantita;
-                        if (oldSource.contenuto === "Vuota") oldSource.contenuto = originalOpData.contenuto;
+                        // Ripristina stato precedente SE era diventata vuota
+                        if (oldSource.volumeCorrente > 0 && vascheData.find(v => v.id === oldSource.id)?.contenuto === 'Vuota') {
+                           oldSource.contenuto = originalOpData.contenuto;
+                           oldSource.colore = originalOpData.colore; // Usa colore registrato nell'operazione
+                           oldSource.annata = originalOpData.annata; // Usa annata registrata nell'operazione
+                           // La denominazione della vasca di origine non dovrebbe cambiare
+                        }
                     }
                     for (const oldDest of originalOpData.destinazioni) {
                         const dest = virtualVasche.get(oldDest.id);
                         if (dest) {
                             dest.volumeCorrente -= oldDest.quantita;
-                            if (dest.volumeCorrente <= 0) { // If reverting empties the tank
-                                dest.volumeCorrente = 0;
-                                dest.contenuto = "Vuota";
-                                dest.denominazione = "";
-                                // Note: We can't perfectly revert a mix, this is a simplification.
-                            }
+                            // Ripristinare lo stato esatto di un mix è difficile, lasciamo lo stato attuale
+                            // Se diventa vuota, verrà gestito dopo
                         }
                     }
                 }
@@ -1608,19 +1650,24 @@
                     
                     if (tipoTravaso === 'vino') {
                         if (originalContent.toLowerCase() === "vuota") {
-                            dest.contenuto = newSource.contenuto;
+                            dest.contenuto = newSource.contenuto; // Prende il contenuto dell'origine
                         } else if (newSource.contenuto.toLowerCase() !== originalContent.toLowerCase()) {
-                            dest.contenuto = `Mix: ${originalContent} + ${newSource.contenuto}`;
+                            dest.contenuto = `Mix: ${originalContent} + ${newSource.contenuto}`; // Crea un mix
                         }
+                        // Sovrascrive Dati destinazione con quelli inseriti nel form travaso
+                        dest.denominazione = denominazione;
+                        dest.annata = annata;
+                        dest.colore = colore;
                     } else {
+                         // Per feccia/vinaccia, il contenuto è fisso, ma gli altri campi vengono aggiornati
                          dest.contenuto = tipoTravaso === 'feccia' ? 'Feccia' : 'Vinaccia';
+                         dest.denominazione = denominazione; // Denominazione della feccia/vinaccia
+                         dest.annata = annata; // Annata della feccia/vinaccia
+                         dest.colore = colore; // Colore originale del vino per tracciabilità
                     }
-                    dest.denominazione = denominazione;
-                    dest.annata = annata;
-                    dest.colore = colore;
                 }
                 
-                // 4. SALVA
+                // 4. SALVA e CONTROLLA STATO VUOTO
                 const involvedIds = new Set(Array.from(virtualVasche.keys()));
                 for(const tankId of involvedIds){
                     const finalState = virtualVasche.get(tankId);
@@ -1628,13 +1675,18 @@
                         finalState.volumeCorrente = 0;
                         finalState.contenuto = 'Vuota';
                         finalState.denominazione = '';
+                        finalState.annata = '';
+                        finalState.colore = ''; // Resetta colore quando vuota
                     }
                     batch.update(getDocRef("vasche", tankId), finalState);
                 }
                 
                 const opData = { 
                     tipo: `travaso_${tipoTravaso}`, vascaId: vascaOrigineId, destinazioni: newDestinazioni,
-                    quantita: newQuantitaTotale, data, note, contenuto: newOrigineVasca.contenuto,
+                    quantita: newQuantitaTotale, data, note,
+                    // Dati vasca origine al momento dell'op (per revert/storico)
+                    contenuto: newOrigineVasca.contenuto,
+                    // Dati della massa trasferita (inseriti nel form)
                     denominazione, annata, colore
                 };
 
@@ -1687,8 +1739,11 @@
             const vasca = vascheData.find(v => v.id === vascaImbottigliamentoOrigineSelect.value);
             if (vasca) {
                 volumeVascaImbottigliamentoDisplay.textContent = `Volume corrente: ${vasca.volumeCorrente} L`;
+                // Precompila denominazione vino basata sulla vasca
+                document.getElementById('denominazione-vino').value = vasca.denominazione || vasca.contenuto; 
             } else {
                 volumeVascaImbottigliamentoDisplay.textContent = '';
+                document.getElementById('denominazione-vino').value = '';
             }
         });
     
@@ -1724,8 +1779,14 @@
                     const oldSourceVasca = virtualVasche.get(originalOpData.vascaId);
                     if (oldSourceVasca) {
                         oldSourceVasca.volumeCorrente += originalOpData.quantita;
-                        if(oldSourceVasca.contenuto === "Vuota"){
+                         // Ripristina stato precedente SE era diventata vuota
+                        if(oldSourceVasca.volumeCorrente > 0 && vascheData.find(v => v.id === oldSourceVasca.id)?.contenuto === 'Vuota'){
                             oldSourceVasca.contenuto = originalOpData.contenuto;
+                            // Ripristina i dati della vasca pre-operazione per coerenza
+                            const originalVascaData = vascheData.find(v => v.id === oldSourceVasca.id);
+                            oldSourceVasca.denominazione = originalVascaData?.denominazione || '';
+                            oldSourceVasca.colore = originalVascaData?.colore || '';
+                            oldSourceVasca.annata = originalVascaData?.annata || '';
                         }
                     }
                 }
@@ -1740,7 +1801,7 @@
                 // 3. ESEGUI: Apply new operation to virtual state
                 newSourceVascaVirtual.volumeCorrente -= quantita;
                 
-                // 4. SALVA: Write all changes to batch
+                // 4. SALVA e CONTROLLA STATO VUOTO
                 const involvedIds = new Set([vascaId]);
                 if(editingOperazioneId && originalOpData) involvedIds.add(originalOpData.vascaId);
 
@@ -1750,12 +1811,17 @@
                         finalState.volumeCorrente = 0;
                         finalState.contenuto = 'Vuota';
                         finalState.denominazione = '';
+                        finalState.annata = '';
+                        finalState.colore = ''; // Resetta colore quando vuota
                     }
                     batch.update(getDocRef("vasche", id), finalState);
                 }
                 
                 const opData = {
-                    tipo: 'imbottigliamento', vascaId, contenuto: newOrigineVasca.contenuto,
+                    tipo: 'imbottigliamento', vascaId,
+                    // Dati vasca origine al momento dell'op per revert/info
+                    contenuto: newOrigineVasca.contenuto,
+                    // Dati specifici dell'imbottigliamento
                     denominazione, lottoProduzione, quantita, volumeBottiglie,
                     numeroBottiglie, data, note
                 };
@@ -1791,7 +1857,7 @@
             const vasca = vascheData.find(v => v.id === vascaLavorazioneSelect.value);
             if (vasca) {
                 volumeVascaLavorazioniDisplay.textContent = `Volume corrente: ${vasca.volumeCorrente} L`;
-                contenutoLavorazioneAttualeInput.value = vasca.contenuto;
+                contenutoLavorazioneAttualeInput.value = vasca.contenuto === 'Vuota' ? '' : vasca.contenuto; // Mostra vuoto se è 'Vuota'
                 coloreLavorazioneAttualeSelect.value = vasca.colore || '';
             } else {
                 volumeVascaLavorazioniDisplay.textContent = '';
@@ -1804,63 +1870,97 @@
             e.preventDefault();
             const vascaId = vascaLavorazioneSelect.value;
             const tipoLavorazione = tipoLavorazioneSelect.value;
-            const contenutoLavorazioneAttuale = document.getElementById('contenuto-lavorazione-attuale').value;
-            const coloreLavorazioneAttuale = coloreLavorazioneAttualeSelect.value;
-            const contenutoLavorazione = document.getElementById('contenuto-lavorazione').value;
+            const contenutoLavorazioneAttuale = document.getElementById('contenuto-lavorazione-attuale').value; // Contenuto RISULTANTE
+            const coloreLavorazioneAttuale = coloreLavorazioneAttualeSelect.value; // Colore RISULTANTE
+            const contenutoLavorazione = document.getElementById('contenuto-lavorazione').value; // Aggiunte
             const data = document.getElementById('data-lavorazione').value;
             const note = document.getElementById('note-lavorazione').value;
             const quantitaInput = Number(quantitaLavorazioneInput.value);
             const unitaQuantita = unitaQuantitaLavorazioneSelect.value;
             
             const vasca = vascheData.find(v => v.id === vascaId);
-            let quantitaLavorazione = 0;
-            
-            if (tipoLavorazione === "Aggiunta di liquido") {
-                if (!vasca) {
-                    showError("Vasca non trovata.");
-                    return;
-                }
-                quantitaLavorazione = unitaQuantita === 'hL' ? quantitaInput * 100 : quantitaInput;
-                
-                let vecchioVolume = originalOpData && originalOpData.tipoLavorazione === 'Aggiunta di liquido' ? originalOpData.quantitaLavorazione : 0;
-                const nuovoVolume = vasca.volumeCorrente + quantitaLavorazione - vecchioVolume;
-                
-                if (nuovoVolume > vasca.capacita) {
-                    showError("L'aggiunta di liquido supererebbe la capacità della vasca.");
-                    return;
-                }
-                
-                try {
-                    const vascaRef = getDocRef("vasche", vascaId);
-                    await updateDoc(vascaRef, { volumeCorrente: nuovoVolume, contenuto: contenutoLavorazioneAttuale, colore: coloreLavorazioneAttuale });
-                    console.log("Volume e contenuto della vasca aggiornati con successo!");
-                } catch (error) {
-                    console.error("Errore nell'aggiornamento del volume:", error);
-                    showError("Errore nell'aggiornamento del volume. Riprova.");
-                    return;
-                }
-            } else {
-                try {
-                    const vascaRef = getDocRef("vasche", vascaId);
-                    await updateDoc(vascaRef, { contenuto: contenutoLavorazioneAttuale, colore: coloreLavorazioneAttuale });
-                } catch (error) {
-                    console.error("Errore nell'aggiornamento del contenuto:", error);
-                    showError("Errore nell'aggiornamento del contenuto. Riprova.");
-                    return;
-                }
+            if (!vasca) {
+                showError("Vasca non trovata.");
+                return;
             }
+
+            let quantitaLavorazione = 0; // Quantità aggiunta
+            let nuovoVolume = vasca.volumeCorrente; // Inizia con il volume attuale
+            let contenutoOriginaleVasca = vasca.contenuto; // Per revert
+            let coloreOriginaleVasca = vasca.colore; // Per revert
+
+            try {
+                const batch = writeBatch(db);
+                const virtualVasche = new Map(vascheData.map(v => [v.id, JSON.parse(JSON.stringify(v))]));
+                const currentVascaVirtual = virtualVasche.get(vascaId);
+
+                // 1. ANNULLA (se in modifica)
+                if (editingOperazioneId && originalOpData) {
+                    contenutoOriginaleVasca = originalOpData.contenutoOriginaleVasca || vasca.contenuto; // Usa dato da op se presente
+                    coloreOriginaleVasca = originalOpData.coloreOriginaleVasca || vasca.colore; // Usa dato da op se presente
+                    if (originalOpData.tipoLavorazione === 'Aggiunta di liquido') {
+                         currentVascaVirtual.volumeCorrente -= originalOpData.quantitaLavorazione;
+                    }
+                    // Ripristina contenuto e colore a quelli PRECEDENTI l'operazione annullata
+                    currentVascaVirtual.contenuto = contenutoOriginaleVasca;
+                    currentVascaVirtual.colore = coloreOriginaleVasca;
+                }
+
+                // 2. VERIFICA e 3. ESEGUI (nuova operazione)
+                if (tipoLavorazione === "Aggiunta di liquido") {
+                    quantitaLavorazione = unitaQuantita === 'hL' ? quantitaInput * 100 : quantitaInput;
+                    nuovoVolume = currentVascaVirtual.volumeCorrente + quantitaLavorazione;
+
+                    if (nuovoVolume > currentVascaVirtual.capacita) {
+                        showError("L'aggiunta di liquido supererebbe la capacità della vasca.");
+                        return;
+                    }
+                    currentVascaVirtual.volumeCorrente = nuovoVolume;
+                }
+                // Aggiorna sempre contenuto e colore a quelli RISULTANTI inseriti nel form
+                currentVascaVirtual.contenuto = contenutoLavorazioneAttuale || 'N/D'; // Usa N/D se vuoto
+                currentVascaVirtual.colore = coloreLavorazioneAttuale;
+
+                // 4. SALVA e CONTROLLA STATO VUOTO
+                const finalState = currentVascaVirtual;
+                if (finalState.volumeCorrente <= 0) {
+                    finalState.volumeCorrente = 0;
+                    finalState.contenuto = 'Vuota';
+                    finalState.denominazione = '';
+                    finalState.annata = '';
+                    finalState.colore = ''; // Resetta colore quando vuota
+                }
+                batch.update(getDocRef("vasche", vascaId), finalState);
             
-            const opData = { tipo: 'lavorazione', vascaId, tipoLavorazione, contenuto: contenutoLavorazione, contenutoLavorazioneAttuale, data, note, quantitaLavorazione, colore: coloreLavorazioneAttuale };
-            if(editingOperazioneId) {
-                await updateOperazione(editingOperazioneId, opData);
-            } else {
-                await addOperazione(opData);
+                const opData = {
+                    tipo: 'lavorazione', vascaId, tipoLavorazione,
+                    contenuto: contenutoLavorazione, // Aggiunte
+                    contenutoLavorazioneAttuale: finalState.contenuto, // Contenuto risultante EFFETTIVO
+                    data, note,
+                    quantitaLavorazione: tipoLavorazione === "Aggiunta di liquido" ? quantitaLavorazione : 0, // Salva quantità solo se aggiunta
+                    colore: finalState.colore, // Colore risultante EFFETTIVO
+                    // Salva stato vasca PRIMA dell'operazione per revert
+                    contenutoOriginaleVasca: vasca.contenuto,
+                    coloreOriginaleVasca: vasca.colore
+                 };
+                 
+                if(editingOperazioneId) {
+                    batch.update(getDocRef("operazioni", editingOperazioneId), opData);
+                } else {
+                    batch.set(doc(getCollectionRef("operazioni")), opData);
+                }
+                
+                await batch.commit();
+                
+                formLavorazione.reset();
+                volumeVascaLavorazioniDisplay.textContent = '';
+                contenutoLavorazioneAttualeInput.value = '';
+                resetOperazioneForms();
+
+            } catch (error) {
+                 console.error("Errore durante la lavorazione:", error);
+                 showError("Si è verificato un errore durante la registrazione della lavorazione.");
             }
-            
-            document.getElementById('form-lavorazione').reset();
-            volumeVascaLavorazioniDisplay.textContent = '';
-            contenutoLavorazioneAttualeInput.value = '';
-            resetOperazioneForms();
         });
     
         selectRiepilogoVasca.addEventListener('change', updateRiepilogo);
@@ -1938,6 +2038,16 @@
             errorModal.classList.add('hidden');
             pendingConfirmAction = null;
         });
+
+        // --- INIZIO Correzione Stabilità: Spostati qui i listener ---
+        reportCloseBtn.addEventListener('click', () => {
+            reportModal.classList.add('hidden');
+        });
+
+        qrCloseBtn.addEventListener('click', () => {
+            qrModal.classList.add('hidden');
+        });
+        // --- FINE Correzione Stabilità ---
     
         formAnalisi.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1988,31 +2098,44 @@
     
         sortAnalisiSelect.addEventListener('change', renderAnalisiList);
     
-        // Excel Import Logic
+        // --- INIZIO Implementazione Importazione Stabile CSV/Excel ---
         btnImportExcel.addEventListener('click', async () => {
             const file = importExcelFile.files[0];
             if (!file) {
-                showError("Seleziona un file Excel da importare.");
+                showError("Seleziona un file Excel (.xls, .xlsx) o CSV (.csv) da importare.");
                 return;
             }
-    
+
+            const fileName = file.name.toLowerCase();
             const reader = new FileReader();
+
             reader.onload = async (e) => {
+                let workbook;
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    if (fileName.endsWith('.csv')) {
+                        // Leggi come TESTO per CSV
+                        const csvData = e.target.result;
+                        workbook = XLSX.read(csvData, { type: 'string' });
+                    } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                        // Leggi come ARRAY BUFFER per Excel
+                        const data = new Uint8Array(e.target.result);
+                        workbook = XLSX.read(data, { type: 'array' });
+                    } else {
+                        showError("Formato file non supportato. Usa .xls, .xlsx o .csv");
+                        return;
+                    }
+
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }); // Use raw: false to get formatted strings
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
     
                     if (json.length < 2) {
-                        showError("Il file Excel non contiene dati validi.");
+                        showError("Il file non contiene dati validi.");
                         return;
                     }
 
                     const headers = json[0].map(h => h ? String(h).toLowerCase().trim() : '');
                     
-                    // Filter out header rows and empty rows from the data
                     const vascaHeaderIndex = headers.indexOf('vasca');
                     const validDataRows = json.slice(1).filter(row => {
                         const hasContent = row.some(cell => cell !== null && cell !== '');
@@ -2025,7 +2148,7 @@
                         return;
                     }
 
-                    // Mappatura flessibile degli header per riconoscere più varianti
+                    // Mappatura flessibile
                     const headerMap = {
                         'vasca': 'vasca', 'numero vasca': 'vasca',
                         'date': 'data', 'data': 'data', 'data analisi': 'data',
@@ -2045,7 +2168,7 @@
                         'note': 'note', 'comment': 'note'
                     };
 
-                    const mappedHeaders = headers.map(h => headerMap[h] || null); // Ignora le colonne non mappate
+                    const mappedHeaders = headers.map(h => headerMap[h] || null);
 
                     const batch = writeBatch(db);
                     const analisiRef = getCollectionRef("analisi");
@@ -2090,7 +2213,7 @@
                         
                         if (Object.keys(parametri).length === 0) {
                             console.warn("Riga saltata: nessun parametro di analisi valido trovato.", rowData);
-                            return; // Salta la riga se non ci sono dati di analisi
+                            return; 
                         }
                         
                         const analisiDaSalvare = {
@@ -2111,11 +2234,21 @@
 
                 } catch (error) {
                     console.error("Errore durante l'importazione:", error);
-                    showError("Si è verificato un errore durante l'importazione dei dati. Controlla che il formato del file Excel sia corretto.");
+                    showError("Si è verificato un errore durante l'importazione dei dati. Controlla che il formato del file sia corretto.");
                 }
             };
-            reader.readAsArrayBuffer(file);
+            
+            // Logica di lettura differenziata
+            if (fileName.endsWith('.csv')) {
+                reader.readAsText(file); // Leggi come TESTO per CSV
+            } else if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+                reader.readAsArrayBuffer(file); // Leggi come ARRAY BUFFER per Excel
+            } else {
+                 showError("Formato file non supportato. Usa .xls, .xlsx o .csv");
+            }
         });
+        // --- FINE Implementazione Importazione Stabile CSV/Excel ---
+
 
         sortAnalisiSelect.addEventListener('change', renderAnalisiList);
         sortTravasiSelect.addEventListener('change', renderTravasiList);
@@ -2166,7 +2299,7 @@
         if (sortValue === "full") {
             sortedData = sortedData.filter(v => (v.volumeCorrente / v.capacita) > 0.95);
         } else if (sortValue === "empty") {
-            sortedData = sortedData.filter(v => (v.volumeCorrente / v.capacita) === 0);
+            sortedData = sortedData.filter(v => v.volumeCorrente <= 0); // Modificato <= 0 per sicurezza
         } else if (sortValue === "volume_asc") {
             sortedData.sort((a, b) => a.volumeCorrente - b.volumeCorrente);
         } else if (sortValue === "volume_desc") {
@@ -2184,8 +2317,26 @@
         
         const html = sortedData.map(vasca => {
             const fillPercentage = vasca.capacita > 0 ? (vasca.volumeCorrente / vasca.capacita) * 100 : 0;
-            const fillStyle = `height: ${fillPercentage}%;`;
-            const fillClass = fillPercentage > 95 ? 'bg-red-500' : 'bg-red-700';
+            const fillStyle = `height: ${fillPercentage > 100 ? 100 : fillPercentage}%;`; // Ensure height doesn't exceed 100%
+            
+            let fillClass = 'bg-transparent'; // Default for empty
+             if (vasca.volumeCorrente > 0 && vasca.colore) {
+                 switch (vasca.colore.toLowerCase()) {
+                    case 'rosso':
+                        fillClass = 'bg-red-700';
+                        break;
+                    case 'bianco':
+                        fillClass = 'bg-yellow-300';
+                        break;
+                    case 'rosato':
+                        fillClass = 'bg-pink-400';
+                        break;
+                    default:
+                        fillClass = 'bg-gray-500'; // Generic color for other contents/colors
+                        break;
+                }
+            }
+
 
             const formattedVolume = vasca.volumeCorrente.toFixed(0);
             const formattedCapacita = vasca.capacita.toFixed(0);
@@ -2227,12 +2378,12 @@
                     document.getElementById('capacita-vasca').value = (vascaToEdit.capacita / 100).toFixed(2);
                     document.getElementById('unita-capacita-vasca').value = 'hL';
                     document.getElementById('tipo-vasca').value = vascaToEdit.tipo;
-                    document.getElementById('colore-vasca').value = vascaToEdit.colore;
+                    document.getElementById('colore-vasca').value = vascaToEdit.colore || ''; // Default to empty if null/undefined
                     document.getElementById('volume-iniziale-vasca').value = (vascaToEdit.volumeCorrente / 100).toFixed(2);
                     document.getElementById('unita-volume-iniziale-vasca').value = 'hL';
-                    document.getElementById('contenuto-vasca').value = vascaToEdit.contenuto;
-                    document.getElementById('denominazione-vasca').value = vascaToEdit.denominazione;
-                    document.getElementById('annata-vasca').value = vascaToEdit.annata;
+                    document.getElementById('contenuto-vasca').value = vascaToEdit.contenuto === 'Vuota' ? '' : vascaToEdit.contenuto; // Show empty string if 'Vuota'
+                    document.getElementById('denominazione-vasca').value = vascaToEdit.denominazione || '';
+                    document.getElementById('annata-vasca').value = vascaToEdit.annata || '';
                     document.getElementById('data-creazione-vasca').value = vascaToEdit.dataCreazione;
                     document.getElementById('note-vasca').value = vascaToEdit.note;
                     formTitle.textContent = 'Modifica Vasca';
@@ -2298,10 +2449,6 @@
         }
     }
 
-    qrCloseBtn.addEventListener('click', () => {
-        qrModal.classList.add('hidden');
-    });
-
     function renderCantinaLayout() {
         console.log("Function 'renderCantinaLayout' called.");
         let sortedData = [...vascheData];
@@ -2326,9 +2473,9 @@
             const liquidHeight = fillPercentage > 100 ? 100 : fillPercentage;
             const fillStyle = `height: ${liquidHeight}%;`;
             
-            let fillClass = 'bg-gray-400'; // Default for empty
-            if (vasca.volumeCorrente > 0) {
-                 switch (String(vasca.colore).toLowerCase()) {
+            let fillClass = 'bg-transparent'; // Default for empty
+             if (vasca.volumeCorrente > 0 && vasca.colore) {
+                 switch (vasca.colore.toLowerCase()) {
                     case 'rosso':
                         fillClass = 'bg-red-800';
                         break;
@@ -2339,10 +2486,11 @@
                         fillClass = 'bg-pink-400';
                         break;
                     default:
-                        fillClass = 'bg-gray-500'; // Generic color for other contents
+                        fillClass = 'bg-gray-500'; // Generic color for other contents/colors
                         break;
                 }
             }
+
 
             const formattedVolume = (vasca.volumeCorrente / 100).toFixed(2);
             const formattedCapacita = (vasca.capacita / 100).toFixed(2);
@@ -2355,7 +2503,7 @@
                     <div class="vasca-liquid ${fillClass}" style="${fillStyle}"></div>
                 </div>
                 <h4 class="font-bold mt-2 text-md">${vasca.numero}</h4>
-                <p class="text-sm text-gray-600">${vasca.contenuto}</p>
+                <p class="text-sm text-gray-600">${vasca.contenuto === 'Vuota' ? '' : vasca.contenuto}</p> <!-- Non mostrare 'Vuota' qui -->
                 <p class="text-xs text-gray-500">${formattedVolume} / ${formattedCapacita} hL</p>
             </div>
             `;
@@ -2415,7 +2563,7 @@
                 qrCodeDiv.innerHTML = `
                     ${imgTag}
                     <p class="mt-2 font-bold text-lg text-gray-800">${vasca.numero}</p>
-                    <p class="text-xs text-gray-500">${vasca.contenuto}</p>
+                    <p class="text-xs text-gray-500">${vasca.contenuto === 'Vuota' ? '' : vasca.contenuto}</p>
                 `;
                 container.appendChild(qrCodeDiv);
             } catch (e) {
@@ -2507,8 +2655,8 @@
                     if (op.quantitaLavorazione && op.quantitaLavorazione > 0) {
                         opDetails += `<br> <strong>Quantità aggiunta:</strong> ${op.quantitaLavorazione} L`;
                     }
-                    opDetails += `<br> <strong>Contenuto:</strong> ${op.contenutoLavorazioneAttuale}`;
-                    opDetails += `<br> <strong>Aggiunte:</strong> ${op.contenuto || 'Nessuna'}`;
+                    opDetails += `<br> <strong>Contenuto Risultante:</strong> ${op.contenutoLavorazioneAttuale}`; // Aggiornato
+                    opDetails += `<br> <strong>Aggiunte:</strong> ${op.contenuto || 'Nessuna'}`; // Questo è 'contenuto' = aggiunte
                 } else if (op.tipo === 'analisi') {
                     opDetails = `<strong>Tipo:</strong> Analisi di Laboratorio <br> <strong>Parametri:</strong> ${Object.keys(op.parametri).map(key => `${key}: ${op.parametri[key]}`).join(', ')}`;
                 }
@@ -2597,8 +2745,8 @@
             <div class="p-4 bg-gray-50 rounded-lg shadow-sm flex justify-between items-center">
                 <div>
                     <h4 class="font-bold">Lavorazione: ${lav.tipoLavorazione} in ${vasca ? vasca.numero : 'Vasca Sconosciuta'}</h4>
-                    <p class="text-sm text-gray-600">Contenuto: <strong>${lav.contenutoLavorazioneAttuale || 'N/D'}</strong></p>
-                    <p class="text-sm text-gray-600">Aggiunte: ${lav.contenuto || 'Nessuna'}</p>
+                    <p class="text-sm text-gray-600">Contenuto Risultante: <strong>${lav.contenutoLavorazioneAttuale || 'N/D'}</strong></p> <!-- Aggiornato -->
+                    <p class="text-sm text-gray-600">Aggiunte: ${lav.contenuto || 'Nessuna'}</p> <!-- Questo è 'contenuto' = aggiunte -->
                     <p class="text-sm text-gray-600">Data: ${lav.data}</p>
                     <p class="text-xs text-gray-500 mt-1">Note: ${lav.note || 'Nessuna'}</p>
                 </div>
@@ -2627,9 +2775,9 @@
         } else if (sortValue === "quantita_desc") {
             sortedImbottigliamenti.sort((a, b) => b.quantita - a.quantita);
         } else if (sortValue === "denominazione") {
-            sortedImbottigliamenti.sort((a, b) => a.denominazione.localeCompare(b.denominazione));
+            sortedImbottigliamenti.sort((a, b) => (a.denominazione || '').localeCompare(b.denominazione || ''));
         } else if (sortValue === "lotto") {
-            sortedImbottigliamenti.sort((a, b) => a.lottoProduzione.localeCompare(b.lottoProduzione));
+            sortedImbottigliamenti.sort((a, b) => (a.lottoProduzione || '').localeCompare(b.lottoProduzione || ''));
         }
         
         if (sortedImbottigliamenti.length === 0) {
@@ -2680,7 +2828,9 @@
         const filteredOperazioni = operazioniData.filter(op => {
             const searchInContenuto = op.contenuto && op.contenuto.toLowerCase().includes(searchQuery);
             const searchInDenominazione = op.denominazione && op.denominazione.toLowerCase().includes(searchQuery);
-            return searchInContenuto || searchInDenominazione;
+             // Aggiungi controllo per contenutoLavorazioneAttuale
+            const searchInContenutoLav = op.contenutoLavorazioneAttuale && op.contenutoLavorazioneAttuale.toLowerCase().includes(searchQuery);
+            return searchInContenuto || searchInDenominazione || searchInContenutoLav;
         });
 
         if (filteredVasche.length === 0 && filteredOperazioni.length === 0) {
@@ -2723,7 +2873,7 @@
                 } else if (op.tipo === 'imbottigliamento') {
                     opDetails = `<strong>Tipo:</strong> Imbottigliamento <br> <strong>Vasca di Origine:</strong> ${vascheData.find(v => v.id === op.vascaId)?.numero || 'Sconosciuta'} <br> <strong>Quantità:</strong> ${(op.quantita / 100).toFixed(2)} hL <br> <strong>Denominazione:</strong> ${op.denominazione}`;
                 } else if (op.tipo === 'lavorazione') {
-                    opDetails = `<strong>Tipo:</strong> Lavorazione (${op.tipoLavorazione}) <br> <strong>in Vasca:</strong> ${vascheData.find(v => v.id === op.vascaId)?.numero || 'Sconosciuta'} <br> <strong>Dettagli:</strong> ${op.contenuto || 'Nessuno'}`;
+                     opDetails = `<strong>Tipo:</strong> Lavorazione (${op.tipoLavorazione}) <br> <strong>in Vasca:</strong> ${vascheData.find(v => v.id === op.vascaId)?.numero || 'Sconosciuta'} <br> <strong>Contenuto Risultante:</strong> ${op.contenutoLavorazioneAttuale || 'N/D'} <br> <strong>Aggiunte:</strong> ${op.contenuto || 'Nessuna'}`;
                 }
 
                 html += `
@@ -2801,9 +2951,10 @@
                             document.getElementById('tab-travasi').click();
                             tipoTravasoSelect.value = op.tipo.split('_')[1];
                             vascaOrigineSelect.value = op.vascaId;
-                            document.getElementById('denominazione-travaso').value = op.denominazione || '';
-                            document.getElementById('annata-travaso').value = op.annata || '';
-                            document.getElementById('colore-travaso').value = op.colore || '';
+                            vascaOrigineSelect.dispatchEvent(new Event('change')); // Aggiorna volume display e precompila campi
+                            document.getElementById('denominazione-travaso').value = op.denominazione || ''; // Usa la denominazione salvata nell'op
+                            document.getElementById('annata-travaso').value = op.annata || ''; // Usa l'annata salvata nell'op
+                            document.getElementById('colore-travaso').value = op.colore || ''; // Usa il colore salvato nell'op
                             document.getElementById('data-travaso').value = op.data;
                             document.getElementById('note-travaso').value = op.note;
                             if (op.tipo === 'travaso_vino') {
@@ -2811,9 +2962,12 @@
                                 travasoFecciaVinacciaFields.classList.add('hidden');
                                 const destInputs = destinazioneContainer.querySelectorAll('.destino-numero');
                                 const quantInputs = destinazioneContainer.querySelectorAll('.destino-quantita');
-                                destInputs.forEach((input, i) => {
-                                    input.value = op.destinazioni[i]?.numero || '';
-                                    quantInputs[i].value = op.destinazioni[i] ? (op.destinazioni[i].quantita / 100).toFixed(2) : '';
+                                // Pulisci prima i campi di destinazione
+                                destInputs.forEach((input, i) => { input.value = ''; quantInputs[i].value = ''; });
+                                // Poi riempi con i dati dell'operazione
+                                op.destinazioni.forEach((dest, i) => {
+                                    if (destInputs[i]) destInputs[i].value = dest.numero || '';
+                                    if (quantInputs[i]) quantInputs[i].value = (dest.quantita / 100).toFixed(2);
                                 });
                             } else {
                                 travasoVinoFields.classList.add('hidden');
@@ -2825,29 +2979,37 @@
                         case 'lavorazione':
                             document.getElementById('tab-lavorazioni').click();
                             vascaLavorazioneSelect.value = op.vascaId;
+                             vascaLavorazioneSelect.dispatchEvent(new Event('change')); // Aggiorna volume display e precompila campi
                             tipoLavorazioneSelect.value = op.tipoLavorazione;
-                            document.getElementById('contenuto-lavorazione-attuale').value = op.contenutoLavorazioneAttuale;
-                            document.getElementById('colore-lavorazione-attuale').value = op.colore;
-                            document.getElementById('contenuto-lavorazione').value = op.contenuto;
+                            document.getElementById('contenuto-lavorazione-attuale').value = op.contenutoLavorazioneAttuale; // Contenuto risultante
+                            document.getElementById('colore-lavorazione-attuale').value = op.colore || ''; // Colore risultante
+                            document.getElementById('contenuto-lavorazione').value = op.contenuto; // Aggiunte
                             document.getElementById('data-lavorazione').value = op.data;
                             document.getElementById('note-lavorazione').value = op.note;
                              if (op.tipoLavorazione === 'Aggiunta di liquido') {
                                 quantitaLavorazioneDiv.classList.remove('hidden');
                                 quantitaLavorazioneInput.value = (op.quantitaLavorazione / 100).toFixed(2);
+                                unitaQuantitaLavorazioneSelect.value = 'hL'; // Assumiamo hL per coerenza
                             } else {
                                 quantitaLavorazioneDiv.classList.add('hidden');
+                                quantitaLavorazioneInput.value = ''; // Pulisci campo
                             }
+                            tipoLavorazioneSelect.dispatchEvent(new Event('change')); // Mostra/nascondi campo quantità
                             break;
                         case 'imbottigliamento':
                             document.getElementById('tab-imbottigliamento').click();
                             vascaImbottigliamentoOrigineSelect.value = op.vascaId;
+                            vascaImbottigliamentoOrigineSelect.dispatchEvent(new Event('change')); // Aggiorna volume display
                             document.getElementById('denominazione-vino').value = op.denominazione;
                             document.getElementById('lotto-produzione').value = op.lottoProduzione;
                             document.getElementById('quantita-imbottigliamento').value = (op.quantita / 100).toFixed(2);
+                            unitaQuantitaImbottigliamentoSelect.value = 'hL'; // Assumiamo hL
                             document.getElementById('volume-bottiglie').value = op.volumeBottiglie;
+                            unitaVolumeBottiglieSelect.value = 'L'; // Assumiamo L
                             document.getElementById('numero-bottiglie').value = op.numeroBottiglie;
                             document.getElementById('data-imbottigliamento').value = op.data;
                             document.getElementById('note-imbottigliamento').value = op.note;
+                            calculateBottles(); // Ricalcola bottiglie in caso di unità diverse
                             break;
                     }
                 }
@@ -2876,36 +3038,62 @@
                 const sourceVasca = virtualVasche.get(op.vascaId);
                 if (sourceVasca) {
                     sourceVasca.volumeCorrente += op.quantita;
-                    if (sourceVasca.contenuto === 'Vuota') sourceVasca.contenuto = op.contenuto;
+                    // Ripristina stato precedente SE era diventata vuota
+                    if (sourceVasca.volumeCorrente > 0 && vascheData.find(v => v.id === sourceVasca.id)?.contenuto === 'Vuota') {
+                       sourceVasca.contenuto = op.contenuto;
+                       sourceVasca.colore = op.colore; // Usa colore registrato nell'operazione
+                       sourceVasca.annata = op.annata; // Usa annata registrata nell'operazione
+                       // Denominazione vasca origine rimane invariata
+                    }
                 }
                 for (const dest of op.destinazioni) {
                     const destVasca = virtualVasche.get(dest.id);
                     if (destVasca) {
                         destVasca.volumeCorrente -= dest.quantita;
-                        if(destVasca.volumeCorrente <= 0){
-                           destVasca.volumeCorrente = 0;
-                           destVasca.contenuto = "Vuota";
-                           destVasca.denominazione = "";
-                        }
+                        // Ripristinare stato esatto pre-mix è difficile, verrà gestito dal controllo finale
                     }
                 }
             } else if (op.tipo === 'imbottigliamento') {
                 const sourceVasca = virtualVasche.get(op.vascaId);
                 if (sourceVasca) {
                     sourceVasca.volumeCorrente += op.quantita;
-                    if(sourceVasca.contenuto === 'Vuota') sourceVasca.contenuto = op.contenuto;
+                     // Ripristina stato precedente SE era diventata vuota
+                    if(sourceVasca.volumeCorrente > 0 && vascheData.find(v => v.id === sourceVasca.id)?.contenuto === 'Vuota'){
+                        sourceVasca.contenuto = op.contenuto; // Contenuto pre-imbottigliamento
+                        const originalVascaData = vascheData.find(v => v.id === sourceVasca.id); // Dati attuali vasca (che dovrebbero essere quelli pre-op dopo il revert del volume)
+                        sourceVasca.denominazione = originalVascaData?.denominazione || '';
+                        sourceVasca.colore = originalVascaData?.colore || '';
+                        sourceVasca.annata = originalVascaData?.annata || '';
+                    }
                 }
-            } else if (op.tipo === 'lavorazione' && op.tipoLavorazione === 'Aggiunta di liquido') {
-                const vasca = virtualVasche.get(op.vascaId);
-                if (vasca) {
-                    vasca.volumeCorrente -= op.quantitaLavorazione;
-                }
+            } else if (op.tipo === 'lavorazione') {
+                 const vasca = virtualVasche.get(op.vascaId);
+                 if (vasca) {
+                     // Ripristina volume se era un'aggiunta
+                     if (op.tipoLavorazione === 'Aggiunta di liquido') {
+                         vasca.volumeCorrente -= op.quantitaLavorazione;
+                     }
+                     // Tenta ripristino stato vasca PRIMA della lavorazione (salvato nell'op)
+                     vasca.contenuto = op.contenutoOriginaleVasca || vasca.contenuto; // Usa fallback se non salvato
+                     vasca.colore = op.coloreOriginaleVasca || vasca.colore; // Usa fallback se non salvato
+                 }
             }
 
+
+            // Applica lo stato finale e controlla lo stato vuoto
             const involvedIds = new Set(Array.from(virtualVasche.keys()));
             for(const tankId of involvedIds){
                 const finalState = virtualVasche.get(tankId);
-                if (vascheData.find(v => v.id === tankId).volumeCorrente !== finalState.volumeCorrente || vascheData.find(v => v.id === tankId).contenuto !== finalState.contenuto) {
+                if (finalState.volumeCorrente <= 0) {
+                     finalState.volumeCorrente = 0;
+                     finalState.contenuto = 'Vuota';
+                     finalState.denominazione = '';
+                     finalState.annata = '';
+                     finalState.colore = ''; // Resetta colore quando vuota
+                }
+                // Scrivi solo se ci sono state modifiche effettive rispetto allo stato attuale
+                const originalVasca = vascheData.find(v => v.id === tankId);
+                if (JSON.stringify(originalVasca) !== JSON.stringify(finalState)) {
                      batch.update(getDocRef("vasche", tankId), finalState);
                 }
             }
@@ -3413,11 +3601,10 @@
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    reportCloseBtn.addEventListener('click', () => {
-        reportModal.classList.add('hidden');
-    });
+    // reportCloseBtn.addEventListener('click', () => {
+    //     reportModal.classList.add('hidden');
+    // });
 }
 
 </script>
 </html>
-
